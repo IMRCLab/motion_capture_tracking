@@ -10,6 +10,7 @@ set (CMAKE_CXX_STANDARD_REQUIRED ON)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  tf
 )
 
 add_subdirectory(externalDependencies/libobjecttracker)
