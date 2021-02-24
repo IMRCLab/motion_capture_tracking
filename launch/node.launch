@@ -4,48 +4,27 @@
   <node pkg="motion_capture_tracking" type="node" name="node" output="screen" >
     <rosparam>
       # Tracking
-      motion_capture_type: "vicon" # one of vicon,optitrack,qualisys,vrpn
-      object_tracking_type: "motionCapture" # one of motionCapture,libobjecttracker
-      vicon_host_name: "192.168.50.253"
-      optitrack_host_name: "optitrack"
-      # qualisys_host_name: "10.0.5.219"
-      # qualisys_base_port: 22222
+      motion_capture_type: "qualisys" # one of vicon,optitrack,qualisys,vrpn
+      object_tracking_type: "libobjecttracker" # one of motionCapture,libobjecttracker
+      # vicon_host_name: "192.168.50.253"
+      # optitrack_host_name: "optitrack"
+      qualisys_host_name: "192.168.5.21"
+      qualisys_base_port: 22222
       # vrpn_host_name: "vicon"
     
       save_point_clouds_path: "" # leave empty to not write point cloud to file
 
 
-      numMarkerConfigurations: 4
+      numMarkerConfigurations: 1
       markerConfigurations:
-        "0":  # for standard Crazyflie
+        "0":  # active marker deck
           numPoints: 4
-          offset: [0.0, -0.01, -0.04]
+          offset: [0.0, 0.0, 0.0]
           points:
-            "0": [0.0177184,0.0139654,0.0557585]
-            "1": [-0.0262914,0.0509139,0.0402475]
-            "2": [-0.0328889,-0.02757,0.0390601]
-            "3": [0.0431307,-0.0331216,0.0388839]
-        "1": # medium frame
-          numPoints: 4
-          offset: [0.0, 0.0, -0.03]
-          points:
-            "0": [-0.00896228,-0.000716753,0.0716129]
-            "1": [-0.0156318,0.0997402,0.0508162]
-            "2": [0.0461693,-0.0881012,0.0380672]
-            "3": [-0.0789959,-0.0269793,0.0461144]
-        "2": # big frame
-          numPoints: 4
-          offset: [0.0, 0.0, -0.06]
-          points:
-            "0": [0.0558163,-0.00196302,0.0945539]
-            "1": [-0.0113941,0.00945842,0.0984811]
-            "2": [-0.0306277,0.0514879,0.0520456]
-            "3": [0.0535816,-0.0400775,0.0432799]
-        "3":  # for standard Crazyflie with a single marker
-          numPoints: 1
-          offset: [0.0, -0.01, -0.04]
-          points:
-            "0": [0.0177184,0.0139654,0.0557585]
+            "0": [ 0.035, 0.000,0.000] # front
+            "1": [ 0.000, 0.035,0.000] # left
+            "2": [-0.035, 0.000,0.000] # back
+            "3": [ 0.000,-0.035,0.000] # right
 
       numDynamicsConfigurations: 1
       dynamicsConfigurations:
@@ -61,11 +40,14 @@
           maxFitnessScore: 0.001
 
       objects:
-        crazyflie:
+        - name: crazyflie
           initialPosition: [0.0,0.0,0.0]
           markerConfiguration: 0
           dynamicsConfiguration: 0
 
     </rosparam>
   </node>
+
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find motion_capture_tracking)/launch/rviz.rviz"/>
+
 </launch>

@@ -163,7 +163,7 @@ int main(int argc, char **argv)
   for (int32_t i = 0; i < yamlObjects.size(); ++i) {
     ROS_ASSERT(yamlObjects[i].getType() == XmlRpc::XmlRpcValue::TypeStruct);
     XmlRpc::XmlRpcValue yamlObject = yamlObjects[i];
-    std::string name = yamlObject;
+    std::string name = yamlObject["name"];
     XmlRpc::XmlRpcValue yamlPos = yamlObject["initialPosition"];
     ROS_ASSERT(yamlPos.getType() == XmlRpc::XmlRpcValue::TypeArray);
 
@@ -191,10 +191,12 @@ int main(int argc, char **argv)
   tf::TransformBroadcaster tfbroadcaster;
 
   for (size_t frameId = 0; ros::ok(); ++frameId) {
-    std::cout << "frame " << frameId << ":" << std::endl;
 
     // Get a frame
     mocap->waitForNextFrame();
+    uint64_t timestamp = mocap->getTimeStamp();
+    std::cout << "frame " << frameId << ":" << timestamp << std::endl;
+
     mocap->getPointCloud(markers);
 
     // publish as pointcloud
@@ -210,7 +212,7 @@ int main(int argc, char **argv)
     pubPointCloud.publish(msgPointCloud);
     
     if (logClouds) {
-      pointCloudLogger.log(markers);
+      pointCloudLogger.log(timestamp/1000, markers);
     }
 
     // run tracker
