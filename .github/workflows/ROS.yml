@@ -1,0 +1,26 @@
+name: ROS
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        # recursively checkout all submodules
+        submodules: 'recursive'
+
+    - uses: ros-tooling/setup-ros@v0.2
+      with:
+        required-ros-distributions: noetic
+
+    - uses: ros-tooling/action-ros-ci@v0.2
+      with:
+        package-name: motion_capture_tracking
+        target-ros1-distro: noetic
