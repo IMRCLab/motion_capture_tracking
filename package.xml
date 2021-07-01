@@ -53,6 +53,7 @@
   <build_export_depend>roscpp</build_export_depend>
   <exec_depend>roscpp</exec_depend>
 
+  <depend>libpcl-all-dev</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
