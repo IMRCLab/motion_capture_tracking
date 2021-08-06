@@ -1,4 +1,4 @@
-[![ROS](https://github.com/IMRCLab/motion_capture_tracking/actions/workflows/ROS.yml/badge.svg?branch=main)](https://github.com/IMRCLab/motion_capture_tracking/actions/workflows/ROS.yml)
+[![ROS2](https://github.com/IMRCLab/motion_capture_tracking/actions/workflows/ROS.yml/badge.svg?branch=ros2)](https://github.com/IMRCLab/motion_capture_tracking/actions/workflows/ROS.yml)
 
 # motion_capture_tracking
 
@@ -9,8 +9,8 @@ This repository is a ROS package that provides an abstraction of different motio
 To build from source, clone the latest version from this repository into your catkin workspace and compile the package using
 
 ```
-cd catkin_workspace/src
+cd ros_ws/src
 git clone --recurse-submodules https://github.com/IMRCLab/motion_capture_tracking
 cd ../
-catkin_make
+colcon build
 ```

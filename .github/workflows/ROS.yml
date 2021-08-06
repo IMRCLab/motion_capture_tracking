@@ -1,10 +1,10 @@
-name: ROS
+name: ROS2
 
 on:
   push:
-    branches: [ main ]
+    branches: [ ros2 ]
   pull_request:
-    branches: [ main ]
+    branches: [ ros2 ]
 
 jobs:
   build:
@@ -13,7 +13,7 @@ jobs:
     steps:
     - uses: ros-tooling/setup-ros@v0.2
       with:
-        required-ros-distributions: noetic
+        required-ros-distributions: galactic
 
     # There is a bug in vcstools, where submodules are not pulled recursively
     # See https://github.com/dirk-thomas/vcstool/issues/205
@@ -28,4 +28,4 @@ jobs:
     - uses: ros-tooling/action-ros-ci@v0.2
       with:
         package-name: motion_capture_tracking
-        target-ros1-distro: noetic
+        target-ros2-distro: galactic

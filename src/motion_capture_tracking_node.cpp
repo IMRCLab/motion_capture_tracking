@@ -1,9 +1,12 @@
 #include <iostream>
 #include <vector>
 
-#include <ros/ros.h>
-#include <tf/transform_broadcaster.h>
-#include <sensor_msgs/PointCloud.h>
+// ROS
+#include "rclcpp/rclcpp.hpp"
+
+// #include <ros/ros.h>
+// #include <tf/transform_broadcaster.h>
+// #include <sensor_msgs/PointCloud.h>
 
 // Motion Capture
 #include <libmotioncapture/motioncapture.h>
@@ -12,24 +15,27 @@
 #include <libobjecttracker/object_tracker.h>
 #include <libobjecttracker/cloudlog.hpp>
 
+#if 0
 void logWarn(const std::string& msg)
 {
   ROS_WARN("%s", msg.c_str());
 }
+#endif
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "motion_capture_tracking_node");
+  rclcpp::init(argc, argv);
+  auto node = rclcpp::Node::make_shared("motion_capture_tracking_node");
+  node->declare_parameter<std::string>("motion_capture_type", "vicon");
+  node->declare_parameter<std::string>("motion_capture_hostname", "localhost");
 
-  ros::NodeHandle nl("~");
-
-  std::string motionCaptureType, motionCaptureHostname;
-  nl.param<std::string>("motion_capture_type", motionCaptureType, "vicon");
-  nl.param<std::string>("motion_capture_hostname", motionCaptureHostname, "localhost");
+  std::string motionCaptureType = node->get_parameter("motion_capture_type").as_string();
+  std::string motionCaptureHostname = node->get_parameter("motion_capture_hostname").as_string();
 
   // Make a new client
   libmotioncapture::MotionCapture *mocap = libmotioncapture::MotionCapture::connect(motionCaptureType, motionCaptureHostname);
 
+#if 0
   // prepare point cloud publisher
   ros::Publisher pubPointCloud = nl.advertise<sensor_msgs::PointCloud>("pointCloud", 1);
   sensor_msgs::PointCloud msgPointCloud;
@@ -196,6 +202,14 @@ int main(int argc, char **argv)
   if (logClouds) {
     pointCloudLogger.flush();
   }
-
+#endif
   return 0;
 }
+
+// int main(int argc, char *argv[])
+// {
+//   rclcpp::init(argc, argv);
+//   rclcpp::spin(std::make_shared<MinimalPublisher>());
+//   rclcpp::shutdown();
+//   return 0;
+// }
