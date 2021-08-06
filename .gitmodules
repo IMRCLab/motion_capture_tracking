@@ -3,4 +3,4 @@
 	url = https://github.com/USC-ACTLab/libobjecttracker.git
 [submodule "externalDependencies/libmotioncapture"]
 	path = externalDependencies/libmotioncapture
-	url = https://github.com/USC-ACTLab/libmotioncapture.git
+	url = https://github.com/IMRCLab/libmotioncapture.git

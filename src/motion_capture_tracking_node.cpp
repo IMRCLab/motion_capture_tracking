@@ -111,8 +111,6 @@ int main(int argc, char **argv)
   libobjecttracker::PointCloudLogger pointCloudLogger(save_point_clouds_path);
   const bool logClouds = !save_point_clouds_path.empty();
 
-  pcl::PointCloud<pcl::PointXYZ>::Ptr markers(new pcl::PointCloud<pcl::PointXYZ>);
-
   // prepare object tracker
 
   std::vector<libobjecttracker::DynamicsConfiguration> dynamicsConfigurations;
@@ -194,10 +192,10 @@ int main(int argc, char **argv)
 
     // Get a frame
     mocap->waitForNextFrame();
-    uint64_t timestamp = mocap->getTimeStamp();
+    uint64_t timestamp = mocap->timeStamp();
     std::cout << "frame " << frameId << ":" << timestamp << std::endl;
 
-    mocap->getPointCloud(markers);
+    auto markers = mocap->pointCloud();
 
     // publish as pointcloud
     msgPointCloud.header.seq += 1;
