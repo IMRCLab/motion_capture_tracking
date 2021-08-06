@@ -1,4 +1,4 @@
-[![ROS](https://github.com/whoenig/motion_capture_tracking/actions/workflows/ROS.yml/badge.svg?branch=main)](https://github.com/whoenig/motion_capture_tracking/actions/workflows/ROS.yml)
+[![ROS](https://github.com/IMRCLab/motion_capture_tracking/actions/workflows/ROS.yml/badge.svg?branch=main)](https://github.com/IMRCLab/motion_capture_tracking/actions/workflows/ROS.yml)
 
 # motion_capture_tracking
 
@@ -10,7 +10,7 @@ To build from source, clone the latest version from this repository into your ca
 
 ```
 cd catkin_workspace/src
-git clone --recurse-submodules https://github.com/whoenig/motion_capture_tracking
+git clone --recurse-submodules https://github.com/IMRCLab/motion_capture_tracking
 cd ../
 catkin_make
 ```

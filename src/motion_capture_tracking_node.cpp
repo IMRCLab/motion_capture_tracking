@@ -6,21 +6,7 @@
 #include <sensor_msgs/PointCloud.h>
 
 // Motion Capture
-#ifdef ENABLE_VICON
-#include <libmotioncapture/vicon.h>
-#endif
-#ifdef ENABLE_OPTITRACK
-#include <libmotioncapture/optitrack.h>
-#endif
-#ifdef ENABLE_PHASESPACE
-#include <libmotioncapture/phasespace.h>
-#endif
-#ifdef ENABLE_QUALISYS
-#include <libmotioncapture/qualisys.h>
-#endif
-#ifdef ENABLE_VRPN
-#include <libmotioncapture/vrpn.h>
-#endif
+#include <libmotioncapture/motioncapture.h>
 
 // Object tracker
 #include <libobjecttracker/object_tracker.h>
@@ -37,68 +23,12 @@ int main(int argc, char **argv)
 
   ros::NodeHandle nl("~");
 
-  std::string motionCaptureType;
+  std::string motionCaptureType, motionCaptureHostname;
   nl.param<std::string>("motion_capture_type", motionCaptureType, "vicon");
+  nl.param<std::string>("motion_capture_hostname", motionCaptureHostname, "localhost");
 
   // Make a new client
-  libmotioncapture::MotionCapture* mocap = nullptr;
-  if (false)
-  {
-  }
-#ifdef ENABLE_VICON
-  else if (motionCaptureType == "vicon")
-  {
-    std::string hostName;
-    nl.getParam("vicon_host_name", hostName);
-    mocap = new libmotioncapture::MotionCaptureVicon(hostName,
-      /*enableObjects*/ true,
-      /*enablePointcloud*/ true);
-  }
-#endif
-#ifdef ENABLE_OPTITRACK
-  else if (motionCaptureType == "optitrack")
-  {
-    std::string hostName;
-    nl.getParam("optitrack_host_name", hostName);
-    mocap = new libmotioncapture::MotionCaptureOptitrack(hostName);
-  }
-#endif
-#ifdef ENABLE_PHASESPACE
-  else if (motionCaptureType == "phasespace")
-  {
-    std::string ip;
-    int numMarkers;
-    nl.getParam("phasespace_ip", ip);
-    nl.getParam("phasespace_num_markers", numMarkers);
-    std::map<size_t, std::pair<int, int> > cfs;
-    cfs[231] = std::make_pair<int, int>(10, 11);
-    mocap = new libmotioncapture::MotionCapturePhasespace(ip, numMarkers, cfs);
-  }
-#endif
-#ifdef ENABLE_QUALISYS
-  else if (motionCaptureType == "qualisys")
-  {
-    std::string hostname;
-    int port;
-    nl.getParam("qualisys_host_name", hostname);
-    nl.getParam("qualisys_base_port", port);
-    mocap = new libmotioncapture::MotionCaptureQualisys(hostname, port,
-      /*enableObjects*/ true,
-      /*enablePointcloud*/ true);
-  }
-#endif
-#ifdef ENABLE_VRPN
-  else if (motionCaptureType == "vrpn")
-  {
-    std::string hostname;
-    int port;
-    nl.getParam("vrpn_host_name", hostname);
-    mocap = new libmotioncapture::MotionCaptureVrpn(hostname);
-  }
-#endif
-  else {
-    throw std::runtime_error("Unknown motion capture type!");
-  }
+  libmotioncapture::MotionCapture *mocap = libmotioncapture::MotionCapture::connect(motionCaptureType, motionCaptureHostname);
 
   // prepare point cloud publisher
   ros::Publisher pubPointCloud = nl.advertise<sensor_msgs::PointCloud>("pointCloud", 1);

@@ -131,22 +131,6 @@ link_directories(
   ${LIBMOTIONCAPTURE_LINK_DIR}
 )
 
-if (ENABLE_VICON)
-  add_definitions(-DENABLE_VICON)
-endif()
-if (ENABLE_OPTITRACK)
-  add_definitions(-DENABLE_OPTITRACK)
-endif()
-if (ENABLE_PHASESPACE)
-  add_definitions(-DENABLE_PHASESPACE)
-endif()
-if (ENABLE_QUALISYS)
-  add_definitions(-DENABLE_QUALISYS)
-endif()
-if (ENABLE_VRPN)
-  add_definitions(-DENABLE_VRPN)
-endif()
-
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/motion_capture_tracking.cpp
