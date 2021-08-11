@@ -9,9 +9,9 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <build_depend>rclcpp</build_depend>
-
-  <exec_depend>rclcpp</exec_depend>
+  <depend>rclcpp</depend>
+  <depend>sensors_msg</depend>
+  <depend>tf2_ros</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

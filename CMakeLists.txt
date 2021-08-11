@@ -8,6 +8,9 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
+
 find_package(Eigen3 REQUIRED)
 find_package(PCL REQUIRED COMPONENTS common)
 
@@ -31,6 +34,8 @@ target_link_libraries(motion_capture_tracking_node
 )
 ament_target_dependencies(motion_capture_tracking_node
   rclcpp
+  sensor_msgs
+  tf2_ros
 )
 target_include_directories(motion_capture_tracking_node PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

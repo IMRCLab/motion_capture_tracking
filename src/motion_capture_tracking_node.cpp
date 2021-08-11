@@ -2,11 +2,9 @@
 #include <vector>
 
 // ROS
-#include "rclcpp/rclcpp.hpp"
-
-// #include <ros/ros.h>
-// #include <tf/transform_broadcaster.h>
-// #include <sensor_msgs/PointCloud.h>
+#include <rclcpp/rclcpp.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <tf2_ros/transform_broadcaster.h>
 
 // Motion Capture
 #include <libmotioncapture/motioncapture.h>
@@ -35,9 +33,10 @@ int main(int argc, char **argv)
   // Make a new client
   libmotioncapture::MotionCapture *mocap = libmotioncapture::MotionCapture::connect(motionCaptureType, motionCaptureHostname);
 
-#if 0
   // prepare point cloud publisher
-  ros::Publisher pubPointCloud = nl.advertise<sensor_msgs::PointCloud>("pointCloud", 1);
+  auto pubPointCloud = node->create_publisher<sensor_msgs::msg::PointCloud2>("pointCloud", 1);
+
+#if 0
   sensor_msgs::PointCloud msgPointCloud;
   msgPointCloud.header.seq = 0;
   msgPointCloud.header.frame_id = "world";
@@ -120,17 +119,17 @@ int main(int argc, char **argv)
       markerConfigurations,
       objects);
   tracker.setLogWarningCallback(logWarn);
-
+#endif
   // prepare TF broadcaster
-  tf::TransformBroadcaster tfbroadcaster;
+  tf2_ros::TransformBroadcaster tfbroadcaster(node);
+  std::vector<geometry_msgs::msg::TransformStamped> transforms;
 
-  for (size_t frameId = 0; ros::ok(); ++frameId) {
+  for (size_t frameId = 0; rclcpp::ok(); ++frameId) {
 
     // Get a frame
     mocap->waitForNextFrame();
-    uint64_t timestamp = mocap->timeStamp();
-    std::cout << "frame " << frameId << ":" << timestamp << std::endl;
 
+#if 0
     auto markers = mocap->pointCloud();
 
     // publish as pointcloud
@@ -151,54 +150,38 @@ int main(int argc, char **argv)
 
     // run tracker
     tracker.update(markers);
+#endif
 
-    for (const auto& object : tracker.objects()) {
+    transforms.clear();
+    transforms.reserve(mocap->rigidBodies().size());
+    auto time = node->now();
+    for (const auto &iter : mocap->rigidBodies())
+    {
+      const auto& rigidBody = iter.second;
 
-      if (object.lastTransformationValid()) {
-        const auto& transform = object.transformation();
-
-        Eigen::Quaternionf q(transform.rotation());
-        const auto& translation = transform.translation();
-
-        tf::Transform tftransform;
-        tftransform.setOrigin(tf::Vector3(translation.x(), translation.y(), translation.z()));
-        tftransform.setRotation(tf::Quaternion(q.x(), q.y(), q.z(), q.w()));
-        tfbroadcaster.sendTransform(tf::StampedTransform(tftransform, ros::Time::now(), "world", object.name()));
+      if (!rigidBody.occluded()) {
+        // const auto& transform = rigidBody.transformation();
+        // transforms.emplace_back(eigenToTransform(transform));
+        transforms.resize(transforms.size() + 1);
+        transforms.back().header.stamp = time;
+        transforms.back().header.frame_id = "world";
+        transforms.back().child_frame_id = rigidBody.name();
+        transforms.back().transform.translation.x = rigidBody.position().x();
+        transforms.back().transform.translation.y = rigidBody.position().y();
+        transforms.back().transform.translation.z = rigidBody.position().z();
+        transforms.back().transform.rotation.x = rigidBody.rotation().x();
+        transforms.back().transform.rotation.y = rigidBody.rotation().y();
+        transforms.back().transform.rotation.z = rigidBody.rotation().z();
+        transforms.back().transform.rotation.w = rigidBody.rotation().w();
       }
     }
+    if (transforms.size() > 0) {
+      tfbroadcaster.sendTransform(transforms);
+    }
 
-
-
-    // std::cout << "    points:" << std::endl;
-
-    // for (size_t i = 0; i < markers->size(); ++i) {
-    //   const pcl::PointXYZ& point = markers->at(i);
-    //   std::cout << "      \"" << i << "\": [" << point.x << "," << point.y << "," << point.z << "]" << std::endl;
-    // }
-
-    // if (mocap->supportsObjectTracking()) {
-    //   mocap->getObjects(objects);
-
-    //   std::cout << "    objects:" << std::endl;
-
-    //   for (auto const& object: objects) {
-    //     std::cout << "      \"" << object.name() << "\":" << std::endl;
-    //     std::cout << "         occluded: " << object.occluded() << std::endl;
-
-    //     if (object.occluded() == false) {
-    //       Eigen::Vector3f position = object.position();
-    //       Eigen::Quaternionf rotation = object.rotation();
-    //       std::cout << "         position: [" << position(0) << ", " << position(1) << ", " << position(2) << "]" << std::endl;
-    //       std::cout << "         rotation: [" << rotation.w() << ", " << rotation.vec()(0) << ", "
-    //                                           << rotation.vec()(1) << ", " << rotation.vec()(2) << "]" << std::endl;
-    //     }
-    //   }
-    // }
-
-
-    ros::spinOnce();
+    rclcpp::spin_some(node);
   }
-
+#if 0
   if (logClouds) {
     pointCloudLogger.flush();
   }
