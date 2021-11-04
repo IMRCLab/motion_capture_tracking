@@ -15,12 +15,12 @@ find_package(Eigen3 REQUIRED)
 find_package(PCL REQUIRED COMPONENTS common)
 
 # add dependencies
-add_subdirectory(externalDependencies/libobjecttracker)
-add_subdirectory(externalDependencies/libmotioncapture)
+add_subdirectory(deps/libobjecttracker EXCLUDE_FROM_ALL)
+add_subdirectory(deps/libmotioncapture EXCLUDE_FROM_ALL)
 
 include_directories(
-  externalDependencies/libobjecttracker/include
-  externalDependencies/libmotioncapture/include
+  deps/libobjecttracker/include
+  deps/libmotioncapture/include
   ${EIGEN3_INCLUDE_DIRS}
   ${PCL_INCLUDE_DIRS}
 )

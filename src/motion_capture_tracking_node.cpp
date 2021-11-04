@@ -31,7 +31,9 @@ int main(int argc, char **argv)
   std::string motionCaptureHostname = node->get_parameter("motion_capture_hostname").as_string();
 
   // Make a new client
-  libmotioncapture::MotionCapture *mocap = libmotioncapture::MotionCapture::connect(motionCaptureType, motionCaptureHostname);
+  std::map<std::string, std::string> cfg;
+  cfg["hostname"] = motionCaptureHostname;
+  libmotioncapture::MotionCapture *mocap = libmotioncapture::MotionCapture::connect(motionCaptureType, cfg);
 
   // prepare point cloud publisher
   auto pubPointCloud = node->create_publisher<sensor_msgs::msg::PointCloud2>("pointCloud", 1);
@@ -159,21 +161,19 @@ int main(int argc, char **argv)
     {
       const auto& rigidBody = iter.second;
 
-      if (!rigidBody.occluded()) {
-        // const auto& transform = rigidBody.transformation();
-        // transforms.emplace_back(eigenToTransform(transform));
-        transforms.resize(transforms.size() + 1);
-        transforms.back().header.stamp = time;
-        transforms.back().header.frame_id = "world";
-        transforms.back().child_frame_id = rigidBody.name();
-        transforms.back().transform.translation.x = rigidBody.position().x();
-        transforms.back().transform.translation.y = rigidBody.position().y();
-        transforms.back().transform.translation.z = rigidBody.position().z();
-        transforms.back().transform.rotation.x = rigidBody.rotation().x();
-        transforms.back().transform.rotation.y = rigidBody.rotation().y();
-        transforms.back().transform.rotation.z = rigidBody.rotation().z();
-        transforms.back().transform.rotation.w = rigidBody.rotation().w();
-      }
+      // const auto& transform = rigidBody.transformation();
+      // transforms.emplace_back(eigenToTransform(transform));
+      transforms.resize(transforms.size() + 1);
+      transforms.back().header.stamp = time;
+      transforms.back().header.frame_id = "world";
+      transforms.back().child_frame_id = rigidBody.name();
+      transforms.back().transform.translation.x = rigidBody.position().x();
+      transforms.back().transform.translation.y = rigidBody.position().y();
+      transforms.back().transform.translation.z = rigidBody.position().z();
+      transforms.back().transform.rotation.x = rigidBody.rotation().x();
+      transforms.back().transform.rotation.y = rigidBody.rotation().y();
+      transforms.back().transform.rotation.z = rigidBody.rotation().z();
+      transforms.back().transform.rotation.w = rigidBody.rotation().w();
     }
     if (transforms.size() > 0) {
       tfbroadcaster.sendTransform(transforms);
