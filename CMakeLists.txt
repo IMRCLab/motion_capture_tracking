@@ -56,4 +56,16 @@ install(TARGETS motion_capture_tracking_node
 #   ament_lint_auto_find_test_dependencies()
 # endif()
 
+# Install launch files.
+install(DIRECTORY
+  launch
+  DESTINATION share/${PROJECT_NAME}/
+)
+
+# Install config files.
+install(DIRECTORY
+  config
+  DESTINATION share/${PROJECT_NAME}/
+)
+
 ament_package()

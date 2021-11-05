@@ -38,11 +38,27 @@ int main(int argc, char **argv)
   // prepare point cloud publisher
   auto pubPointCloud = node->create_publisher<sensor_msgs::msg::PointCloud2>("pointCloud", 1);
 
-#if 0
-  sensor_msgs::PointCloud msgPointCloud;
-  msgPointCloud.header.seq = 0;
+  sensor_msgs::msg::PointCloud2 msgPointCloud;
   msgPointCloud.header.frame_id = "world";
+  msgPointCloud.height = 1;
 
+  sensor_msgs::msg::PointField field;
+  field.name = "x";
+  field.offset = 0;
+  field.datatype = sensor_msgs::msg::PointField::FLOAT32;
+  field.count = 1;
+  msgPointCloud.fields.push_back(field);
+  field.name = "y";
+  field.offset = 4;
+  msgPointCloud.fields.push_back(field);
+  field.name = "z";
+  field.offset = 8;
+  msgPointCloud.fields.push_back(field);
+  msgPointCloud.point_step = 12;
+  msgPointCloud.is_bigendian = false;
+  msgPointCloud.is_dense = true;
+
+#if 0
   std::string save_point_clouds_path;
   nl.param<std::string>("save_point_clouds_path", save_point_clouds_path, "");
   libobjecttracker::PointCloudLogger pointCloudLogger(save_point_clouds_path);
@@ -130,21 +146,19 @@ int main(int argc, char **argv)
 
     // Get a frame
     mocap->waitForNextFrame();
+    auto time = node->now();
 
-#if 0
     auto markers = mocap->pointCloud();
 
     // publish as pointcloud
-    msgPointCloud.header.seq += 1;
-    msgPointCloud.header.stamp = ros::Time::now();
-    msgPointCloud.points.resize(markers->size());
-    for (size_t i = 0; i < markers->size(); ++i) {
-      const pcl::PointXYZ& point = markers->at(i);
-      msgPointCloud.points[i].x = point.x;
-      msgPointCloud.points[i].y = point.y;
-      msgPointCloud.points[i].z = point.z;
-    }
-    pubPointCloud.publish(msgPointCloud);
+    msgPointCloud.header.stamp = time;
+    msgPointCloud.width = markers.rows();
+    msgPointCloud.data.resize(markers.rows() * 3 * 4); // width * height * pointstep
+    memcpy(msgPointCloud.data.data(), markers.data(), msgPointCloud.data.size());
+    msgPointCloud.row_step = msgPointCloud.data.size();
+
+    pubPointCloud->publish(msgPointCloud);
+#if 0
     
     if (logClouds) {
       pointCloudLogger.log(timestamp/1000, markers);
@@ -156,7 +170,6 @@ int main(int argc, char **argv)
 
     transforms.clear();
     transforms.reserve(mocap->rigidBodies().size());
-    auto time = node->now();
     for (const auto &iter : mocap->rigidBodies())
     {
       const auto& rigidBody = iter.second;
@@ -188,11 +201,3 @@ int main(int argc, char **argv)
 #endif
   return 0;
 }
-
-// int main(int argc, char *argv[])
-// {
-//   rclcpp::init(argc, argv);
-//   rclcpp::spin(std::make_shared<MinimalPublisher>());
-//   rclcpp::shutdown();
-//   return 0;
-// }
