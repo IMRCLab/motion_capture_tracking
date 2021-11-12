@@ -9,7 +9,7 @@
 // Motion Capture
 #include <libmotioncapture/motioncapture.h>
 
-// Object tracker
+// Rigid Body tracker
 #include <librigidbodytracker/rigid_body_tracker.h>
 #include <librigidbodytracker/cloudlog.hpp>
 
@@ -87,7 +87,7 @@ int main(int argc, char **argv)
   msgPointCloud.is_dense = true;
 
 
-  // prepare object tracker
+  // prepare rigid body tracker
 
   auto node_parameters_iface = node->get_node_parameters_interface();
   const std::map<std::string, rclcpp::ParameterValue> &parameter_overrides =
@@ -133,7 +133,7 @@ int main(int argc, char **argv)
   }
 
   auto rigid_body_names = extract_names(parameter_overrides, "rigid_bodies");
-  std::vector<librigidbodytracker::Object> objects;
+  std::vector<librigidbodytracker::RigidBody> rigidBodies;
   for (const auto &name : rigid_body_names)
   {
     const auto pos = get_vec(parameter_overrides.at("rigid_bodies." + name + ".initial_position"));
@@ -142,13 +142,13 @@ int main(int argc, char **argv)
     const auto marker = parameter_overrides.at("rigid_bodies." + name + ".marker").get<std::string>();
     const auto dynamics = parameter_overrides.at("rigid_bodies." + name + ".dynamics").get<std::string>();
 
-    objects.push_back(librigidbodytracker::Object(marker_name_to_index.at(marker), dynamics_name_to_index.at(dynamics), m, name));
+    rigidBodies.push_back(librigidbodytracker::RigidBody(marker_name_to_index.at(marker), dynamics_name_to_index.at(dynamics), m, name));
   }
 
-  librigidbodytracker::ObjectTracker tracker(
+  librigidbodytracker::RigidBodyTracker tracker(
       dynamicsConfigurations,
       markerConfigurations,
-      objects);
+      rigidBodies);
   tracker.setLogWarningCallback(std::bind(logWarn, node->get_logger(), std::placeholders::_1));
 
   // prepare TF broadcaster
@@ -210,7 +210,7 @@ int main(int argc, char **argv)
       transforms.back().transform.rotation.w = rigidBody.rotation().w();
     }
 
-    for (const auto& rigidBody : tracker.objects())
+    for (const auto& rigidBody : tracker.rigidBodies())
     {
       if (rigidBody.lastTransformationValid())
       {
