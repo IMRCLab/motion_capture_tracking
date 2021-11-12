@@ -13,22 +13,50 @@
 #include <librigidbodytracker/rigid_body_tracker.h>
 #include <librigidbodytracker/cloudlog.hpp>
 
-#if 0
-void logWarn(const std::string& msg)
+void logWarn(rclcpp::Logger logger, const std::string& msg)
 {
-  ROS_WARN("%s", msg.c_str());
+  RCLCPP_WARN(logger, "%s", msg.c_str());
 }
-#endif
+
+std::set<std::string> extract_names(
+  const std::map<std::string, rclcpp::ParameterValue> &parameter_overrides,
+  const std::string& pattern)
+{
+  std::set<std::string> result;
+  for (const auto &i : parameter_overrides)
+  {
+    if (i.first.find(pattern) == 0)
+    {
+      size_t start = pattern.size() + 1;
+      size_t end = i.first.find(".", start);
+      result.insert(i.first.substr(start, end - start));
+    }
+  }
+  return result;
+}
+
+std::vector<double> get_vec(const rclcpp::ParameterValue& param_value)
+{
+  if (param_value.get_type() == rclcpp::PARAMETER_INTEGER_ARRAY) {
+    const auto int_vec = param_value.get<std::vector<int64_t>>();
+    std::vector<double> result;
+    for (int v : int_vec) {
+      result.push_back(v);
+    }
+    return result;
+  }
+  return param_value.get<std::vector<double>>();
+}
 
 int main(int argc, char **argv)
 {
   rclcpp::init(argc, argv);
   auto node = rclcpp::Node::make_shared("motion_capture_tracking_node");
-  node->declare_parameter<std::string>("motion_capture_type", "vicon");
-  node->declare_parameter<std::string>("motion_capture_hostname", "localhost");
+  node->declare_parameter<std::string>("type", "vicon");
+  node->declare_parameter<std::string>("hostname", "localhost");
 
-  std::string motionCaptureType = node->get_parameter("motion_capture_type").as_string();
-  std::string motionCaptureHostname = node->get_parameter("motion_capture_hostname").as_string();
+  std::string motionCaptureType = node->get_parameter("type").as_string();
+  std::string motionCaptureHostname = node->get_parameter("hostname").as_string();
 
   // Make a new client
   std::map<std::string, std::string> cfg;
@@ -58,115 +86,108 @@ int main(int argc, char **argv)
   msgPointCloud.is_bigendian = false;
   msgPointCloud.is_dense = true;
 
-#if 0
-  std::string save_point_clouds_path;
-  nl.param<std::string>("save_point_clouds_path", save_point_clouds_path, "");
-  librigidbodytracker::PointCloudLogger pointCloudLogger(save_point_clouds_path);
-  const bool logClouds = !save_point_clouds_path.empty();
 
   // prepare object tracker
 
-  std::vector<librigidbodytracker::DynamicsConfiguration> dynamicsConfigurations;
+  auto node_parameters_iface = node->get_node_parameters_interface();
+  const std::map<std::string, rclcpp::ParameterValue> &parameter_overrides =
+      node_parameters_iface->get_parameter_overrides();
 
-  int numConfigurations;
-  nl.getParam("numDynamicsConfigurations", numConfigurations);
-  dynamicsConfigurations.resize(numConfigurations);
-  for (int i = 0; i < numConfigurations; ++i) {
-    std::stringstream sstr;
-    sstr << "dynamicsConfigurations/" << i;
-    nl.getParam(sstr.str() + "/maxXVelocity", dynamicsConfigurations[i].maxXVelocity);
-    nl.getParam(sstr.str() + "/maxYVelocity", dynamicsConfigurations[i].maxYVelocity);
-    nl.getParam(sstr.str() + "/maxZVelocity", dynamicsConfigurations[i].maxZVelocity);
-    nl.getParam(sstr.str() + "/maxPitchRate", dynamicsConfigurations[i].maxPitchRate);
-    nl.getParam(sstr.str() + "/maxRollRate", dynamicsConfigurations[i].maxRollRate);
-    nl.getParam(sstr.str() + "/maxYawRate", dynamicsConfigurations[i].maxYawRate);
-    nl.getParam(sstr.str() + "/maxRoll", dynamicsConfigurations[i].maxRoll);
-    nl.getParam(sstr.str() + "/maxPitch", dynamicsConfigurations[i].maxPitch);
-    nl.getParam(sstr.str() + "/maxFitnessScore", dynamicsConfigurations[i].maxFitnessScore);
+
+  auto dynamics_config_names = extract_names(parameter_overrides, "dynamics_configurations");
+  std::vector<librigidbodytracker::DynamicsConfiguration> dynamicsConfigurations(dynamics_config_names.size());
+  std::map<std::string, size_t> dynamics_name_to_index;
+  size_t i = 0;
+  for (const auto& name : dynamics_config_names) {
+    const auto max_vel = get_vec(parameter_overrides.at("dynamics_configurations." + name + ".max_velocity"));
+    dynamicsConfigurations[i].maxXVelocity = max_vel.at(0);
+    dynamicsConfigurations[i].maxYVelocity = max_vel.at(1);
+    dynamicsConfigurations[i].maxZVelocity = max_vel.at(2);
+    const auto max_angular_velocity = get_vec(parameter_overrides.at("dynamics_configurations." + name + ".max_angular_velocity"));
+    dynamicsConfigurations[i].maxRollRate = max_angular_velocity.at(0);
+    dynamicsConfigurations[i].maxPitchRate = max_angular_velocity.at(1);
+    dynamicsConfigurations[i].maxYawRate = max_angular_velocity.at(2);
+    dynamicsConfigurations[i].maxRoll = parameter_overrides.at("dynamics_configurations." + name + ".max_roll").get<double>();
+    dynamicsConfigurations[i].maxPitch = parameter_overrides.at("dynamics_configurations." + name + ".max_pitch").get<double>();
+    dynamicsConfigurations[i].maxFitnessScore = parameter_overrides.at("dynamics_configurations." + name + ".max_fitness_score").get<double>();
+    dynamics_name_to_index[name] = i;
+    ++i;
   }
 
+  auto marker_config_names = extract_names(parameter_overrides, "marker_configurations");
   std::vector<librigidbodytracker::MarkerConfiguration> markerConfigurations;
-  nl.getParam("numMarkerConfigurations", numConfigurations);
-  for (int i = 0; i < numConfigurations; ++i) {
+  std::map<std::string, size_t> marker_name_to_index;
+  for (const auto &name : marker_config_names)
+  {
     markerConfigurations.push_back(pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>));
-    std::stringstream sstr;
-    sstr << "markerConfigurations/" << i << "/numPoints";
-    int numPoints;
-    nl.getParam(sstr.str(), numPoints);
-
-    std::vector<double> offset;
-    std::stringstream sstr2;
-    sstr2 << "markerConfigurations/" << i << "/offset";
-    nl.getParam(sstr2.str(), offset);
-    for (int j = 0; j < numPoints; ++j) {
-      std::stringstream sstr3;
-      sstr3 << "markerConfigurations/" << i << "/points/" << j;
-      std::vector<double> points;
-      nl.getParam(sstr3.str(), points);
-      markerConfigurations.back()->push_back(pcl::PointXYZ(points[0] + offset[0], points[1] + offset[1], points[2] + offset[2]));
+    const auto offset = get_vec(parameter_overrides.at("marker_configurations." + name + ".offset"));
+    for (const auto &param : parameter_overrides)
+    {
+      if (param.first.find("marker_configurations." + name + ".points") == 0)
+      {
+        const auto points = get_vec(param.second);
+        markerConfigurations.back()->push_back(pcl::PointXYZ(points[0] + offset[0], points[1] + offset[1], points[2] + offset[2]));
+      }
     }
+    marker_name_to_index[name] = i;
   }
 
+  auto rigid_body_names = extract_names(parameter_overrides, "rigid_bodies");
   std::vector<librigidbodytracker::Object> objects;
-  XmlRpc::XmlRpcValue yamlObjects;
-  nl.getParam("objects", yamlObjects);
-  ROS_ASSERT(yamlObjects.getType() == XmlRpc::XmlRpcValue::TypeArray);
-  for (int32_t i = 0; i < yamlObjects.size(); ++i) {
-    ROS_ASSERT(yamlObjects[i].getType() == XmlRpc::XmlRpcValue::TypeStruct);
-    XmlRpc::XmlRpcValue yamlObject = yamlObjects[i];
-    std::string name = yamlObject["name"];
-    XmlRpc::XmlRpcValue yamlPos = yamlObject["initialPosition"];
-    ROS_ASSERT(yamlPos.getType() == XmlRpc::XmlRpcValue::TypeArray);
-
-    std::vector<double> posVec(3);
-    for (int32_t j = 0; j < yamlPos.size(); ++j) {
-      ROS_ASSERT(yamlPos[j].getType() == XmlRpc::XmlRpcValue::TypeDouble);
-      double f = static_cast<double>(yamlPos[j]);
-      posVec[j] = f;
-    }
+  for (const auto &name : rigid_body_names)
+  {
+    const auto pos = get_vec(parameter_overrides.at("rigid_bodies." + name + ".initial_position"));
     Eigen::Affine3f m;
-    m = Eigen::Translation3f(posVec[0], posVec[1], posVec[2]);
-    int markerConfigurationIdx = yamlObject["markerConfiguration"];
-    int dynamicsConfigurationIdx = yamlObject["dynamicsConfiguration"];
+    m = Eigen::Translation3f(pos[0], pos[1], pos[2]);
+    const auto marker = parameter_overrides.at("rigid_bodies." + name + ".marker").get<std::string>();
+    const auto dynamics = parameter_overrides.at("rigid_bodies." + name + ".dynamics").get<std::string>();
 
-    objects.push_back(librigidbodytracker::Object(markerConfigurationIdx, dynamicsConfigurationIdx, m, name));
+    objects.push_back(librigidbodytracker::Object(marker_name_to_index.at(marker), dynamics_name_to_index.at(dynamics), m, name));
   }
 
   librigidbodytracker::ObjectTracker tracker(
       dynamicsConfigurations,
       markerConfigurations,
       objects);
-  tracker.setLogWarningCallback(logWarn);
-#endif
+  tracker.setLogWarningCallback(std::bind(logWarn, node->get_logger(), std::placeholders::_1));
+
   // prepare TF broadcaster
   tf2_ros::TransformBroadcaster tfbroadcaster(node);
   std::vector<geometry_msgs::msg::TransformStamped> transforms;
+
+  pcl::PointCloud<pcl::PointXYZ>::Ptr markers(new pcl::PointCloud<pcl::PointXYZ>);
 
   for (size_t frameId = 0; rclcpp::ok(); ++frameId) {
 
     // Get a frame
     mocap->waitForNextFrame();
+    auto chrono_now = std::chrono::high_resolution_clock::now();
     auto time = node->now();
 
-    auto markers = mocap->pointCloud();
+    auto pointcloud = mocap->pointCloud();
 
     // publish as pointcloud
     msgPointCloud.header.stamp = time;
-    msgPointCloud.width = markers.rows();
-    msgPointCloud.data.resize(markers.rows() * 3 * 4); // width * height * pointstep
-    memcpy(msgPointCloud.data.data(), markers.data(), msgPointCloud.data.size());
+    msgPointCloud.width = pointcloud.rows();
+    msgPointCloud.data.resize(pointcloud.rows() * 3 * 4); // width * height * pointstep
+    memcpy(msgPointCloud.data.data(), pointcloud.data(), msgPointCloud.data.size());
     msgPointCloud.row_step = msgPointCloud.data.size();
 
     pubPointCloud->publish(msgPointCloud);
 #if 0
-    
     if (logClouds) {
       pointCloudLogger.log(timestamp/1000, markers);
     }
+#endif
 
     // run tracker
+    markers->clear();
+    for (long int i = 0; i < pointcloud.rows(); ++i)
+    {
+      const auto &point = pointcloud.row(i);
+      markers->push_back(pcl::PointXYZ(point(0), point(1), point(2)));
+    }
     tracker.update(markers);
-#endif
 
     transforms.clear();
     transforms.reserve(mocap->rigidBodies().size());
@@ -188,6 +209,34 @@ int main(int argc, char **argv)
       transforms.back().transform.rotation.z = rigidBody.rotation().z();
       transforms.back().transform.rotation.w = rigidBody.rotation().w();
     }
+
+    for (const auto& rigidBody : tracker.objects())
+    {
+      if (rigidBody.lastTransformationValid())
+      {
+        const Eigen::Affine3f &transform = rigidBody.transformation();
+        Eigen::Quaternionf q(transform.rotation());
+        const auto &translation = transform.translation();
+
+        transforms.resize(transforms.size() + 1);
+        transforms.back().header.stamp = time;
+        transforms.back().header.frame_id = "world";
+        transforms.back().child_frame_id = rigidBody.name();
+        transforms.back().transform.translation.x = translation.x();
+        transforms.back().transform.translation.y = translation.y();
+        transforms.back().transform.translation.z = translation.z();
+        transforms.back().transform.rotation.x = q.x();
+        transforms.back().transform.rotation.y = q.y();
+        transforms.back().transform.rotation.z = q.z();
+        transforms.back().transform.rotation.w = q.w();
+      }
+      else
+      {
+        std::chrono::duration<double> elapsedSeconds = chrono_now - rigidBody.lastValidTime();
+        RCLCPP_WARN(node->get_logger(), "No updated pose for %s for %f s.", rigidBody.name().c_str(), elapsedSeconds.count());
+      }
+    }
+
     if (transforms.size() > 0) {
       tfbroadcaster.sendTransform(transforms);
     }
@@ -200,4 +249,4 @@ int main(int argc, char **argv)
   }
 #endif
   return 0;
-}
+  }
