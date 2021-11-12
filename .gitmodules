@@ -1,4 +1,4 @@
-[submodule "externalDependencies/libmotioncapture"]
+[submodule "deps/libmotioncapture"]
 	path = deps/libmotioncapture
 	url = https://github.com/IMRCLab/libmotioncapture.git
 [submodule "deps/librigidbodytracker"]
