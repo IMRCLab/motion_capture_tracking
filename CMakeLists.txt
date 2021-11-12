@@ -15,11 +15,11 @@ find_package(Eigen3 REQUIRED)
 find_package(PCL REQUIRED COMPONENTS common)
 
 # add dependencies
-add_subdirectory(deps/libobjecttracker EXCLUDE_FROM_ALL)
+add_subdirectory(deps/librigidbodytracker EXCLUDE_FROM_ALL)
 add_subdirectory(deps/libmotioncapture EXCLUDE_FROM_ALL)
 
 include_directories(
-  deps/libobjecttracker/include
+  deps/librigidbodytracker/include
   deps/libmotioncapture/include
   ${EIGEN3_INCLUDE_DIRS}
   ${PCL_INCLUDE_DIRS}
@@ -29,7 +29,7 @@ add_executable(motion_capture_tracking_node
   src/motion_capture_tracking_node.cpp
 )
 target_link_libraries(motion_capture_tracking_node
-  libobjecttracker
+  librigidbodytracker
   libmotioncapture
 )
 ament_target_dependencies(motion_capture_tracking_node

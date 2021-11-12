@@ -8,8 +8,12 @@ def generate_launch_description():
     rviz_config = os.path.join(
         get_package_share_directory('motion_capture_tracking'),
         'config',
-        'rviz.rviz'
-)
+        'rviz.rviz')
+
+    node_config = os.path.join(
+        get_package_share_directory('motion_capture_tracking'),
+        'config',
+        'cfg.yaml')
 
     return LaunchDescription([
         Node(
@@ -17,10 +21,7 @@ def generate_launch_description():
             executable='motion_capture_tracking_node',
             name='motion_capture_tracking',
             output='screen',
-            parameters=[{
-                'motion_capture_type': 'optitrack',
-                'motion_capture_hostname': '130.149.82.37',
-            }]
+            parameters=[node_config]
         ),
         Node(
             package='rviz2',

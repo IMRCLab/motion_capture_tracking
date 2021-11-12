@@ -1,0 +1,4 @@
+/motion_capture_tracking_node:
+  ros__parameters:
+    motion_capture_type: 'optitrack'
+    motion_capture_hostname: '130.149.82.37'

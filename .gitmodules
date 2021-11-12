@@ -1,6 +1,6 @@
-[submodule "externalDependencies/libobjecttracker"]
-	path = deps/libobjecttracker
-	url = https://github.com/USC-ACTLab/libobjecttracker.git
 [submodule "externalDependencies/libmotioncapture"]
 	path = deps/libmotioncapture
 	url = https://github.com/IMRCLab/libmotioncapture.git
+[submodule "deps/librigidbodytracker"]
+	path = deps/librigidbodytracker
+	url = https://github.com/IMRCLab/librigidbodytracker.git

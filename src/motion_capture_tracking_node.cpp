@@ -10,8 +10,8 @@
 #include <libmotioncapture/motioncapture.h>
 
 // Object tracker
-#include <libobjecttracker/object_tracker.h>
-#include <libobjecttracker/cloudlog.hpp>
+#include <librigidbodytracker/rigid_body_tracker.h>
+#include <librigidbodytracker/cloudlog.hpp>
 
 #if 0
 void logWarn(const std::string& msg)
@@ -61,12 +61,12 @@ int main(int argc, char **argv)
 #if 0
   std::string save_point_clouds_path;
   nl.param<std::string>("save_point_clouds_path", save_point_clouds_path, "");
-  libobjecttracker::PointCloudLogger pointCloudLogger(save_point_clouds_path);
+  librigidbodytracker::PointCloudLogger pointCloudLogger(save_point_clouds_path);
   const bool logClouds = !save_point_clouds_path.empty();
 
   // prepare object tracker
 
-  std::vector<libobjecttracker::DynamicsConfiguration> dynamicsConfigurations;
+  std::vector<librigidbodytracker::DynamicsConfiguration> dynamicsConfigurations;
 
   int numConfigurations;
   nl.getParam("numDynamicsConfigurations", numConfigurations);
@@ -85,7 +85,7 @@ int main(int argc, char **argv)
     nl.getParam(sstr.str() + "/maxFitnessScore", dynamicsConfigurations[i].maxFitnessScore);
   }
 
-  std::vector<libobjecttracker::MarkerConfiguration> markerConfigurations;
+  std::vector<librigidbodytracker::MarkerConfiguration> markerConfigurations;
   nl.getParam("numMarkerConfigurations", numConfigurations);
   for (int i = 0; i < numConfigurations; ++i) {
     markerConfigurations.push_back(pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>));
@@ -107,7 +107,7 @@ int main(int argc, char **argv)
     }
   }
 
-  std::vector<libobjecttracker::Object> objects;
+  std::vector<librigidbodytracker::Object> objects;
   XmlRpc::XmlRpcValue yamlObjects;
   nl.getParam("objects", yamlObjects);
   ROS_ASSERT(yamlObjects.getType() == XmlRpc::XmlRpcValue::TypeArray);
@@ -129,10 +129,10 @@ int main(int argc, char **argv)
     int markerConfigurationIdx = yamlObject["markerConfiguration"];
     int dynamicsConfigurationIdx = yamlObject["dynamicsConfiguration"];
 
-    objects.push_back(libobjecttracker::Object(markerConfigurationIdx, dynamicsConfigurationIdx, m, name));
+    objects.push_back(librigidbodytracker::Object(markerConfigurationIdx, dynamicsConfigurationIdx, m, name));
   }
 
-  libobjecttracker::ObjectTracker tracker(
+  librigidbodytracker::ObjectTracker tracker(
       dynamicsConfigurations,
       markerConfigurations,
       objects);
