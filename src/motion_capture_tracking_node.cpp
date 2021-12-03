@@ -117,6 +117,7 @@ int main(int argc, char **argv)
   auto marker_config_names = extract_names(parameter_overrides, "marker_configurations");
   std::vector<librigidbodytracker::MarkerConfiguration> markerConfigurations;
   std::map<std::string, size_t> marker_name_to_index;
+  i = 0;
   for (const auto &name : marker_config_names)
   {
     markerConfigurations.push_back(pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>));
@@ -130,6 +131,7 @@ int main(int argc, char **argv)
       }
     }
     marker_name_to_index[name] = i;
+    ++i;
   }
 
   auto rigid_body_names = extract_names(parameter_overrides, "rigid_bodies");
