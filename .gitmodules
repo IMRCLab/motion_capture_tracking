@@ -1,6 +1,6 @@
 [submodule "deps/libmotioncapture"]
-	path = deps/libmotioncapture
+	path = motion_capture_tracking/deps/libmotioncapture
 	url = https://github.com/IMRCLab/libmotioncapture.git
 [submodule "deps/librigidbodytracker"]
-	path = deps/librigidbodytracker
+	path = motion_capture_tracking/deps/librigidbodytracker
 	url = https://github.com/IMRCLab/librigidbodytracker.git
