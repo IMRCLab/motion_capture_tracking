@@ -5,6 +5,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <tf2_ros/transform_broadcaster.h>
+#include <motion_capture_tracking_interfaces/msg/named_pose_array.hpp>
 
 // Motion Capture
 #include <libmotioncapture/motioncapture.h>
@@ -86,6 +87,11 @@ int main(int argc, char **argv)
   msgPointCloud.is_bigendian = false;
   msgPointCloud.is_dense = true;
 
+  // prepare pose array publisher
+  auto pubPoses = node->create_publisher<motion_capture_tracking_interfaces::msg::NamedPoseArray>("poses", 1);
+
+  motion_capture_tracking_interfaces::msg::NamedPoseArray msgPoses;
+  msgPoses.header.frame_id = "world";
 
   // prepare rigid body tracker
 
@@ -227,10 +233,17 @@ int main(int argc, char **argv)
         transforms.back().transform.translation.x = translation.x();
         transforms.back().transform.translation.y = translation.y();
         transforms.back().transform.translation.z = translation.z();
-        transforms.back().transform.rotation.x = q.x();
-        transforms.back().transform.rotation.y = q.y();
-        transforms.back().transform.rotation.z = q.z();
-        transforms.back().transform.rotation.w = q.w();
+        if (rigidBody.orientationAvailable()) {
+          transforms.back().transform.rotation.x = q.x();
+          transforms.back().transform.rotation.y = q.y();
+          transforms.back().transform.rotation.z = q.z();
+          transforms.back().transform.rotation.w = q.w();
+        } else {
+          transforms.back().transform.rotation.x = std::nan("");
+          transforms.back().transform.rotation.y = std::nan("");
+          transforms.back().transform.rotation.z = std::nan("");
+          transforms.back().transform.rotation.w = std::nan("");
+        }
       }
       else
       {
@@ -240,6 +253,19 @@ int main(int argc, char **argv)
     }
 
     if (transforms.size() > 0) {
+      // publish poses
+      msgPointCloud.header.stamp = time;
+      msgPoses.poses.resize(transforms.size());
+      for (size_t i = 0; i < transforms.size(); ++i) {
+        msgPoses.poses[i].name = transforms[i].child_frame_id;
+        msgPoses.poses[i].pose.position.x = transforms[i].transform.translation.x;
+        msgPoses.poses[i].pose.position.y = transforms[i].transform.translation.y;
+        msgPoses.poses[i].pose.position.z = transforms[i].transform.translation.z;
+        msgPoses.poses[i].pose.orientation = transforms[i].transform.rotation;
+      }
+      pubPoses->publish(msgPoses);
+
+      // update tf
       tfbroadcaster.sendTransform(transforms);
     }
 
