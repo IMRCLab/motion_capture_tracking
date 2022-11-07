@@ -17,6 +17,7 @@ find_package(PCL REQUIRED COMPONENTS common)
 
 # add dependencies
 add_subdirectory(deps/librigidbodytracker EXCLUDE_FROM_ALL)
+set(LIBMOTIONCAPTURE_BUILD_PYTHON_BINDINGS OFF)
 add_subdirectory(deps/libmotioncapture EXCLUDE_FROM_ALL)
 
 include_directories(
