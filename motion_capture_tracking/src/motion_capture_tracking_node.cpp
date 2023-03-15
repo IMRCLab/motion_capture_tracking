@@ -265,7 +265,16 @@ int main(int argc, char **argv)
       }
       pubPoses->publish(msgPoses);
 
-      // update tf
+      // send TF. Since RViz and others can't handle nan's, report a fake oriention if needed
+      for (auto& tf : transforms) {
+        if (std::isnan(tf.transform.rotation.x)) {
+          tf.transform.rotation.x = 0;
+          tf.transform.rotation.y = 0;
+          tf.transform.rotation.z = 0;
+          tf.transform.rotation.w = 1;
+        }
+      }
+
       tfbroadcaster.sendTransform(transforms);
     }
 
