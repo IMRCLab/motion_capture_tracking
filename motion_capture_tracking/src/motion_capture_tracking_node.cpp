@@ -55,9 +55,13 @@ int main(int argc, char **argv)
   auto node = rclcpp::Node::make_shared("motion_capture_tracking_node");
   node->declare_parameter<std::string>("type", "vicon");
   node->declare_parameter<std::string>("hostname", "localhost");
+  node->declare_parameter<std::string>("topics.poses.qos.mode", "none");
+  node->declare_parameter<double>("topics.poses.qos.deadline", 100.0);
 
   std::string motionCaptureType = node->get_parameter("type").as_string();
   std::string motionCaptureHostname = node->get_parameter("hostname").as_string();
+  std::string poses_qos = node->get_parameter("topics.poses.qos.mode").as_string();
+  double poses_deadline = node->get_parameter("topics.poses.qos.deadline").as_double();
 
   // Make a new client
   std::map<std::string, std::string> cfg;
@@ -88,7 +92,17 @@ int main(int argc, char **argv)
   msgPointCloud.is_dense = true;
 
   // prepare pose array publisher
-  auto pubPoses = node->create_publisher<motion_capture_tracking_interfaces::msg::NamedPoseArray>("poses", 1);
+  rclcpp::Publisher<motion_capture_tracking_interfaces::msg::NamedPoseArray>::SharedPtr pubPoses;
+  if (poses_qos == "none") {
+    pubPoses = node->create_publisher<motion_capture_tracking_interfaces::msg::NamedPoseArray>("poses", 1);
+  } else if (poses_qos == "sensor") {
+    rclcpp::SensorDataQoS sensor_data_qos;
+    sensor_data_qos.keep_last(1);
+    sensor_data_qos.deadline(rclcpp::Duration(0/*s*/, (int)1e9/poses_deadline /*ns*/));
+    pubPoses = node->create_publisher<motion_capture_tracking_interfaces::msg::NamedPoseArray>("poses", sensor_data_qos);
+  } else {
+    throw std::runtime_error("Unknown QoS mode! " + poses_qos);
+  }
 
   motion_capture_tracking_interfaces::msg::NamedPoseArray msgPoses;
   msgPoses.header.frame_id = "world";
