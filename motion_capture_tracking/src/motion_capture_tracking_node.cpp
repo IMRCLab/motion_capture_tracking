@@ -62,6 +62,7 @@ int main(int argc, char **argv)
   std::string motionCaptureHostname = node->get_parameter("hostname").as_string();
   std::string poses_qos = node->get_parameter("topics.poses.qos.mode").as_string();
   double poses_deadline = node->get_parameter("topics.poses.qos.deadline").as_double();
+  std::string logFilePath = node->get_parameter("logfilepath").as_string();
 
   // Make a new client
   std::map<std::string, std::string> cfg;
@@ -196,11 +197,14 @@ int main(int argc, char **argv)
     msgPointCloud.row_step = msgPointCloud.data.size();
 
     pubPointCloud->publish(msgPointCloud);
-#if 0
+// #if 1
+    libobjecttracker::PointCloudLogger pointCloudLogger(logFilePath);
+    const bool logClouds = !logFilePath.empty();
+
     if (logClouds) {
       pointCloudLogger.log(timestamp/1000, markers);
     }
-#endif
+// #endif
 
     // run tracker
     markers->clear();
@@ -294,10 +298,10 @@ int main(int argc, char **argv)
 
     rclcpp::spin_some(node);
   }
-#if 0
+// #if 1
   if (logClouds) {
     pointCloudLogger.flush();
   }
-#endif
+// #endif
   return 0;
   }

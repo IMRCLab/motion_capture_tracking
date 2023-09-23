@@ -9,7 +9,9 @@
       poses:
         qos:
           mode: "none"
-          deadline: 100.0 # Hz
+          deadline: 100.0 
+
+    logfilepath: '/home/nan/data/'
 
     marker_configurations:
       default: # for standard Crazyflie
