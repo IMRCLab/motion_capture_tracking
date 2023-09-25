@@ -65,6 +65,12 @@ int main(int argc, char **argv)
   double poses_deadline = node->get_parameter("topics.poses.qos.deadline").as_double();
   std::string logFilePath = node->get_parameter("logfilepath").as_string();
 
+  std::cout << "111111111111" << std::endl;
+  librigidbodytracker::PointCloudLogger pointCloudLogger(logFilePath);
+  const bool logClouds = !logFilePath.empty();
+  std::cout << "logClouds=" <<logClouds << std::endl;  // 1
+  // std::cout << "222222222222222222" << std::endl;
+
   // Make a new client
   std::map<std::string, std::string> cfg;
   cfg["hostname"] = motionCaptureHostname;
@@ -181,8 +187,8 @@ int main(int argc, char **argv)
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr markers(new pcl::PointCloud<pcl::PointXYZ>);
 
-  librigidbodytracker::PointCloudLogger pointCloudLogger(logFilePath);
-  const bool logClouds = !logFilePath.empty();
+  // librigidbodytracker::PointCloudLogger pointCloudLogger(logFilePath);
+  // const bool logClouds = !logFilePath.empty();
 
   for (size_t frameId = 0; rclcpp::ok(); ++frameId) {
 
@@ -202,9 +208,6 @@ int main(int argc, char **argv)
 
     pubPointCloud->publish(msgPointCloud);
 // #if 1
-    // librigidbodytracker::PointCloudLogger pointCloudLogger(logFilePath);
-    // const bool logClouds = !logFilePath.empty();
-
     if (logClouds) {
       // pointCloudLogger.log(timestamp/1000, markers); // HOW to define timestamp here
       // auto time = node->now();?    the input should be milli second?

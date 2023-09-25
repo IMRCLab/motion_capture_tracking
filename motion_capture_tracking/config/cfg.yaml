@@ -11,7 +11,7 @@
           mode: "none"
           deadline: 100.0 
 
-    logfilepath: '/home/nan/data/'
+    logfilepath: '/home/nan/data/1.txt'
 
     marker_configurations:
       default: # for standard Crazyflie
