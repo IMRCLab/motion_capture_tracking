@@ -180,6 +180,9 @@ int main(int argc, char **argv)
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr markers(new pcl::PointCloud<pcl::PointXYZ>);
 
+  librigidbodytracker::PointCloudLogger pointCloudLogger(logFilePath);
+  const bool logClouds = !logFilePath.empty();
+
   for (size_t frameId = 0; rclcpp::ok(); ++frameId) {
 
     // Get a frame
@@ -198,11 +201,13 @@ int main(int argc, char **argv)
 
     pubPointCloud->publish(msgPointCloud);
 // #if 1
-    libobjecttracker::PointCloudLogger pointCloudLogger(logFilePath);
-    const bool logClouds = !logFilePath.empty();
+    // librigidbodytracker::PointCloudLogger pointCloudLogger(logFilePath);
+    // const bool logClouds = !logFilePath.empty();
 
     if (logClouds) {
-      pointCloudLogger.log(timestamp/1000, markers);
+      // pointCloudLogger.log(timestamp/1000, markers); // HOW to define timestamp here
+      // auto time = node->now();?    the input should be milli second?
+      pointCloudLogger.log(markers);
     }
 // #endif
 
