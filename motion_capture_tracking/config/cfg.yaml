@@ -11,7 +11,7 @@
           mode: "none"
           deadline: 100.0 
 
-    logfilepath: '/home/nan/data/1.txt'
+    logfilepath: './motion_capture_tracking/data/test'
 
     marker_configurations:
       default: # for standard Crazyflie
@@ -51,5 +51,6 @@
     rigid_bodies:
       crazyflie:
         initial_position: [0,0,0]
-        marker: "default"
+        # marker: "default"
+        marker: "default_single_marker"
         dynamics: "default"
