@@ -9,7 +9,7 @@
       poses:
         qos:
           mode: "none"
-          deadline: 100.0 
+          deadline: 100.0 # Hz
 
     logfilepath: './motion_capture_tracking/data/test'
 
