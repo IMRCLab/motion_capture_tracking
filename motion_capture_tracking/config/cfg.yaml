@@ -11,7 +11,7 @@
           mode: "none"
           deadline: 100.0 # Hz
 
-    logfilepath: './motion_capture_tracking/data/test'
+    logfilepath: './motion_capture_tracking/data/test' # use "", to disable
 
     marker_configurations:
       default: # for standard Crazyflie
@@ -51,6 +51,6 @@
     rigid_bodies:
       crazyflie:
         initial_position: [0,0,0]
-        # marker: "default"
-        marker: "default_single_marker"
+        marker: "default"
+        # marker: "default_single_marker"
         dynamics: "default"

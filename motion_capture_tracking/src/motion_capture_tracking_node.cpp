@@ -57,7 +57,7 @@ int main(int argc, char **argv)
   node->declare_parameter<std::string>("hostname", "localhost");
   node->declare_parameter<std::string>("topics.poses.qos.mode", "none");
   node->declare_parameter<double>("topics.poses.qos.deadline", 100.0);
-  node->declare_parameter<std::string>("logfilepath", "none");
+  node->declare_parameter<std::string>("logfilepath", "");
 
   std::string motionCaptureType = node->get_parameter("type").as_string();
   std::string motionCaptureHostname = node->get_parameter("hostname").as_string();
@@ -202,13 +202,12 @@ int main(int argc, char **argv)
     msgPointCloud.row_step = msgPointCloud.data.size();
 
     pubPointCloud->publish(msgPointCloud);
-// #if 1
     if (logClouds) {
       // pointCloudLogger.log(timestamp/1000, markers);  // point cloud log format: infinite repetitions of:  timestamp (milliseconds) : uint32
       // std::cout << "0000000000000before log" << std::endl;
       pointCloudLogger.log(markers);
     }
-// #endif
+
 
     // run tracker
     markers->clear();
@@ -301,17 +300,16 @@ int main(int argc, char **argv)
     }
     if (logClouds) {
       pointCloudLogger.flush();
-      // std::cout << "after flush" << std::endl;
 
     }
     rclcpp::spin_some(node);
   }
-// #if 1
+
   if (logClouds) {
     pointCloudLogger.flush();
     std::cout << "after flush" << std::endl;
 
   }
-// #endif
+
   return 0;
   }
