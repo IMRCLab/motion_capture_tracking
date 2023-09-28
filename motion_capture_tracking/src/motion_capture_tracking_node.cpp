@@ -300,15 +300,12 @@ int main(int argc, char **argv)
     }
     if (logClouds) {
       pointCloudLogger.flush();
-
     }
     rclcpp::spin_some(node);
   }
 
   if (logClouds) {
     pointCloudLogger.flush();
-    std::cout << "after flush" << std::endl;
-
   }
 
   return 0;
