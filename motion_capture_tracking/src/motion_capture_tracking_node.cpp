@@ -57,11 +57,17 @@ int main(int argc, char **argv)
   node->declare_parameter<std::string>("hostname", "localhost");
   node->declare_parameter<std::string>("topics.poses.qos.mode", "none");
   node->declare_parameter<double>("topics.poses.qos.deadline", 100.0);
+  node->declare_parameter<std::string>("logfilepath", "");
 
   std::string motionCaptureType = node->get_parameter("type").as_string();
   std::string motionCaptureHostname = node->get_parameter("hostname").as_string();
   std::string poses_qos = node->get_parameter("topics.poses.qos.mode").as_string();
   double poses_deadline = node->get_parameter("topics.poses.qos.deadline").as_double();
+  std::string logFilePath = node->get_parameter("logfilepath").as_string();
+
+  librigidbodytracker::PointCloudLogger pointCloudLogger(logFilePath);
+  const bool logClouds = !logFilePath.empty();
+  std::cout << "logClouds=" <<logClouds << std::endl;  // 1
 
   // Make a new client
   std::map<std::string, std::string> cfg;
@@ -196,11 +202,12 @@ int main(int argc, char **argv)
     msgPointCloud.row_step = msgPointCloud.data.size();
 
     pubPointCloud->publish(msgPointCloud);
-#if 0
     if (logClouds) {
-      pointCloudLogger.log(timestamp/1000, markers);
+      // pointCloudLogger.log(timestamp/1000, markers);  // point cloud log format: infinite repetitions of:  timestamp (milliseconds) : uint32
+      // std::cout << "0000000000000before log" << std::endl;
+      pointCloudLogger.log(markers);
     }
-#endif
+
 
     // run tracker
     markers->clear();
@@ -291,13 +298,15 @@ int main(int argc, char **argv)
 
       tfbroadcaster.sendTransform(transforms);
     }
-
+    if (logClouds) {
+      pointCloudLogger.flush();
+    }
     rclcpp::spin_some(node);
   }
-#if 0
+
   if (logClouds) {
     pointCloudLogger.flush();
   }
-#endif
+
   return 0;
   }
