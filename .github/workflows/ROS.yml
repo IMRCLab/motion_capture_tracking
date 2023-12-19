@@ -31,8 +31,8 @@ jobs:
     strategy:
       matrix:
         ros_distribution:
-          - galactic
           - humble
+          - iron
 
         # Define the Docker image(s) associated with each ROS distribution.
         include:
