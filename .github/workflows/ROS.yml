@@ -50,7 +50,7 @@ jobs:
       image: ${{ matrix.docker_image }}
     steps:
       - name: setup ROS environment
-        uses: ros-tooling/setup-ros@v0.4
+        uses: ros-tooling/setup-ros@v0.7
         with:
           required-ros-distributions: ${{ matrix.ros_distribution }}
 
@@ -65,7 +65,7 @@ jobs:
           vcs --version
 
       - name: build and test ROS 2
-        uses: ros-tooling/action-ros-ci@v0.2
+        uses: ros-tooling/action-ros-ci@v0.3
         with:
           package-name: motion_capture_tracking
           target-ros2-distro: ${{ matrix.ros_distribution }}
