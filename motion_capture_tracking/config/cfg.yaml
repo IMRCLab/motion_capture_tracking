@@ -1,18 +1,28 @@
 /motion_capture_tracking:
   ros__parameters:
+    # one of "optitrack", "optitrack_closed_source", "vicon", "qualisys", "nokov", "vrpn", "motionanalysis"
     type: "optitrack"
+    # Specify the hostname or IP of the computer running the motion capture software
     hostname: "130.149.82.37"
 
-    mode: "libobjecttracker" # one of motionCapture,libRigidBodyTracker
+    # Use "motionCapture" to disable custom rigid body tracking (to rely on the vendor's software)
+    # Use "libRigidBodyTracker" for custom frame-by-frame tracking, in which you need to define 
+    #                           marker_configurations, dynamics_configurations, and rigid_bodies below.
+    mode: "libRigidBodyTracker"
 
+    # The information will always be broadcasted via tf2
+    # Specify additional settings for the /poses topic here
     topics:
       poses:
         qos:
-          mode: "none"
+          mode: "none" # one of "none" or "sensor"
           deadline: 100.0 # Hz
 
-    logfilepath: './motion_capture_tracking/data/test' # use "", to disable
+    # If desired, log the pointcloud to a binary log file for analysis with libRigidBodyTracker
+    # Use "" to disable.
+    logfilepath: ''
 
+    # Define the placement of spherical markers on rigid bodies, in the local coordinate frame.
     marker_configurations:
       default: # for standard Crazyflie
         offset: [0.0, -0.01, -0.04]
@@ -40,6 +50,7 @@
           p2: [-0.0306277,0.0514879,0.0520456]
           p3: [0.0535816,-0.0400775,0.0432799]
 
+    # Define the first-order dynamic limits
     dynamics_configurations:
       default:
         max_velocity: [2, 2, 3] # m/s
@@ -48,6 +59,8 @@
         max_pitch: 1.4 #rad
         max_fitness_score: 0.001
 
+    # Define your rigid bodies to track with known initial position guess, name of the marker and name of the dynamics
+    # from the above settings.
     rigid_bodies:
       crazyflie:
         initial_position: [0,0,0]
