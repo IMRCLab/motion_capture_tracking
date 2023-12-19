@@ -72,5 +72,6 @@ The unlabeled marker tracking is using an optimal assignment with a min-cost max
 
 These are current vendor-agnostic alternatives if no custom tracking is needed:
 
-- https://github.com/ros-drivers/vrpn_client_ros
-- https://github.com/MOCAP4ROS2-Project
+- https://github.com/alvinsunyixiao/vrpn_mocap (only VRPN)
+- https://github.com/ros-drivers/vrpn_client_ros (only VRPN)
+- https://github.com/MOCAP4ROS2-Project (VRPN, Vicon, Optitrack, Qualisys, Technaid each in separate packages)
