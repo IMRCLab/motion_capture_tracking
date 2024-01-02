@@ -4,14 +4,14 @@
   <name>motion_capture_tracking</name>
   <version>1.0.0</version>
   <description>ROS Package for different motion capture systems, including custom rigid body tracking support</description>
-  <maintainer email="whoenig@caltech.edu">Wolfgang Hönig</maintainer>
+  <maintainer email="hoenig@tu-berlin.de">Wolfgang Hönig</maintainer>
   <license>MIT</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>rclcpp</depend>
   <depend>tf2_ros</depend>
-  <depend>sensors_msg</depend>
+  <depend>sensor_msg</depend>
   <depend>motion_capture_tracking_interfaces</depend>
 
   <test_depend>ament_lint_auto</test_depend>
