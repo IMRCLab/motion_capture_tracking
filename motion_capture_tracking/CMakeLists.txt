@@ -19,6 +19,12 @@ find_package(PCL REQUIRED COMPONENTS common)
 # add dependencies
 add_subdirectory(deps/librigidbodytracker EXCLUDE_FROM_ALL)
 set(LIBMOTIONCAPTURE_BUILD_PYTHON_BINDINGS OFF)
+
+# To use NOKOV, place their SDK in
+# motion_capture_tracking/deps/libmotioncapture/deps/nokov_sdk
+# and set this variable to "ON"
+set(LIBMOTIONCAPTURE_ENABLE_NOKOV OFF)
+
 add_subdirectory(deps/libmotioncapture EXCLUDE_FROM_ALL)
 
 include_directories(

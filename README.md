@@ -41,6 +41,14 @@ ros2 launch motion_capture_tracking launch.py
 
 The various options can be configured in `config/cfg.yaml`.
 
+### NOKOV: Vendor-specific Instructions
+
+Since the SDK is not publically available, adding the SDK and building from source is required.
+
+1. Place the SDK in `motion_capture_tracking/deps/libmotioncapture/deps/nokov_sdk` (such that there is for example the file `motion_capture_tracking/deps/libmotioncapture/deps/nokov_sdk/lib/libSeekerSDKClient.so`)
+2. In `motion_capture_tracking/CMakeLists.txt` change `set(LIBMOTIONCAPTURE_ENABLE_NOKOV OFF)` to `set(LIBMOTIONCAPTURE_ENABLE_NOKOV ON)`
+3. Rebuild using `colcon build`
+
 ## Technical Background
 
 The ROS package is a wrapper around [libmotioncapture](https://github.com/IMRCLab/libmotioncapture) and [librigidbodytracker](https://github.com/IMRCLab/librigidbodytracker).
