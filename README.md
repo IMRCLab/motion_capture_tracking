@@ -41,6 +41,24 @@ ros2 launch motion_capture_tracking launch.py
 
 The various options can be configured in `config/cfg.yaml`.
 
+### Optitrack: Vendor-specific Instructions
+
+There are two possible backends. 
+
+* "optitrack" uses the Direct Depacketizers option. This works on all platforms, but often has compatibility issues with untested Motive versions and doesn't support all features.
+* "optitrack_closed_source" uses the official SDK (version 4.1.0) (only available on x64 Linux; distributed as a binary library)
+
+Make sure that you have the following settings in Motive:
+
+menu Edit/Settings/Streaming:
+* Enable NatNet
+* Use "Transmission Type" Multicast
+* Enable Unlabeled Markers and Rigid Bodies
+* Use "Up Axis": Z-Axis
+* Use the default ports (1510 command, 1511 data)
+
+We recommend that you first try "optitrack" and switch to "optitrack_closed_source" if you encounter any issues. 
+
 ### NOKOV: Vendor-specific Instructions
 
 Since the SDK is not publically available, adding the SDK and building from source is required.

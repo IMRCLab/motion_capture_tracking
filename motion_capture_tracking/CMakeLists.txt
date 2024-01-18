@@ -19,11 +19,24 @@ find_package(PCL REQUIRED COMPONENTS common)
 # add dependencies
 add_subdirectory(deps/librigidbodytracker EXCLUDE_FROM_ALL)
 set(LIBMOTIONCAPTURE_BUILD_PYTHON_BINDINGS OFF)
+set(LIBMOTIONCAPTURE_BUILD_EXAMPLE OFF)
+
+set(LIBMOTIONCAPTURE_ENABLE_QUALISYS ON)
+set(LIBMOTIONCAPTURE_ENABLE_OPTITRACK ON)
+set(LIBMOTIONCAPTURE_ENABLE_OPTITRACK_CLOSED_SOURCE ON)
+set(LIBMOTIONCAPTURE_ENABLE_VICON ON)
+set(LIBMOTIONCAPTURE_ENABLE_VRPN ON)
+set(LIBMOTIONCAPTURE_ENABLE_FZMOTION ON)
 
 # To use NOKOV, place their SDK in
 # motion_capture_tracking/deps/libmotioncapture/deps/nokov_sdk
 # and set this variable to "ON"
 set(LIBMOTIONCAPTURE_ENABLE_NOKOV OFF)
+
+# To use Motion Analysis, place their SDK in
+# motion_capture_tracking/deps/libmotioncapture/deps/cortex_sdk_linux
+# and set this variable to "ON"
+set(LIBMOTIONCAPTURE_ENABLE_MOTIONANALYSIS OFF)
 
 add_subdirectory(deps/libmotioncapture EXCLUDE_FROM_ALL)
 
