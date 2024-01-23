@@ -2,8 +2,8 @@
 Changelog for package motion_capture_tracking_interfaces
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.0.2 (2024-01-23)
+------------------
 * fix package dependencies in package.xml
 * Contributors: Wolfgang Hoenig
 
