@@ -2,6 +2,11 @@
 Changelog for package motion_capture_tracking_interfaces
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* add ament_lint_common test dependency
+* Contributors: Wolfgang Hoenig
+
 1.0.2 (2024-01-23)
 ------------------
 * fix package dependencies in package.xml
