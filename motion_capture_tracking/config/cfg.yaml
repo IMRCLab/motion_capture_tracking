@@ -5,11 +5,6 @@
     # Specify the hostname or IP of the computer running the motion capture software
     hostname: "130.149.82.37"
 
-    # Use "motionCapture" to disable custom rigid body tracking (to rely on the vendor's software)
-    # Use "libRigidBodyTracker" for custom frame-by-frame tracking, in which you need to define 
-    #                           marker_configurations, dynamics_configurations, and rigid_bodies below.
-    mode: "libRigidBodyTracker"
-
     # The information will always be broadcasted via tf2
     # Specify additional settings for the /poses topic here
     topics:
