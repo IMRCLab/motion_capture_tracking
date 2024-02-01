@@ -65,6 +65,10 @@ int main(int argc, char **argv)
   double poses_deadline = node->get_parameter("topics.poses.qos.deadline").as_double();
   std::string logFilePath = node->get_parameter("logfilepath").as_string();
 
+  auto node_parameters_iface = node->get_node_parameters_interface();
+  const std::map<std::string, rclcpp::ParameterValue> &parameter_overrides =
+      node_parameters_iface->get_parameter_overrides();
+
   librigidbodytracker::PointCloudLogger pointCloudLogger(logFilePath);
   const bool logClouds = !logFilePath.empty();
   std::cout << "logClouds=" <<logClouds << std::endl;  // 1
@@ -72,6 +76,17 @@ int main(int argc, char **argv)
   // Make a new client
   std::map<std::string, std::string> cfg;
   cfg["hostname"] = motionCaptureHostname;
+
+  // if the mock type is selected, add the defined rigid bodies
+  if (motionCaptureType == "mock") {
+    auto rigid_body_names = extract_names(parameter_overrides, "rigid_bodies");
+    for (const auto &name : rigid_body_names)
+    {
+      const auto pos = get_vec(parameter_overrides.at("rigid_bodies." + name + ".initial_position"));
+      cfg["rigid_bodies"] += name + "(" + std::to_string(pos[0]) + "," + std::to_string(pos[1]) + "," + std::to_string(pos[2]) +",1,0,0,0);";
+    }
+  }
+
   libmotioncapture::MotionCapture *mocap = libmotioncapture::MotionCapture::connect(motionCaptureType, cfg);
 
   // prepare point cloud publisher
@@ -115,11 +130,6 @@ int main(int argc, char **argv)
 
   // prepare rigid body tracker
 
-  auto node_parameters_iface = node->get_node_parameters_interface();
-  const std::map<std::string, rclcpp::ParameterValue> &parameter_overrides =
-      node_parameters_iface->get_parameter_overrides();
-
-
   auto dynamics_config_names = extract_names(parameter_overrides, "dynamics_configurations");
   std::vector<librigidbodytracker::DynamicsConfiguration> dynamicsConfigurations(dynamics_config_names.size());
   std::map<std::string, size_t> dynamics_name_to_index;
@@ -160,17 +170,20 @@ int main(int argc, char **argv)
     ++i;
   }
 
-  auto rigid_body_names = extract_names(parameter_overrides, "rigid_bodies");
   std::vector<librigidbodytracker::RigidBody> rigidBodies;
-  for (const auto &name : rigid_body_names)
-  {
-    const auto pos = get_vec(parameter_overrides.at("rigid_bodies." + name + ".initial_position"));
-    Eigen::Affine3f m;
-    m = Eigen::Translation3f(pos[0], pos[1], pos[2]);
-    const auto marker = parameter_overrides.at("rigid_bodies." + name + ".marker").get<std::string>();
-    const auto dynamics = parameter_overrides.at("rigid_bodies." + name + ".dynamics").get<std::string>();
+  // only add the rigid bodies to the tracker if we are not using the "mock" mode
+  if (motionCaptureType != "mock") {
+    auto rigid_body_names = extract_names(parameter_overrides, "rigid_bodies");
+    for (const auto &name : rigid_body_names)
+    {
+      const auto pos = get_vec(parameter_overrides.at("rigid_bodies." + name + ".initial_position"));
+      Eigen::Affine3f m;
+      m = Eigen::Translation3f(pos[0], pos[1], pos[2]);
+      const auto marker = parameter_overrides.at("rigid_bodies." + name + ".marker").get<std::string>();
+      const auto dynamics = parameter_overrides.at("rigid_bodies." + name + ".dynamics").get<std::string>();
 
-    rigidBodies.push_back(librigidbodytracker::RigidBody(marker_name_to_index.at(marker), dynamics_name_to_index.at(dynamics), m, name));
+      rigidBodies.push_back(librigidbodytracker::RigidBody(marker_name_to_index.at(marker), dynamics_name_to_index.at(dynamics), m, name));
+    }
   }
 
   librigidbodytracker::RigidBodyTracker tracker(
