@@ -2,8 +2,8 @@
 Changelog for package motion_capture_tracking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.0.4 (2024-03-06)
+------------------
 * install libNatNet.so as part of package
   Fixes `#14 <https://github.com/IMRCLab/motion_capture_tracking/issues/14>`_
 * Add support for the "mock" motion capture type
