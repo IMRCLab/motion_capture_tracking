@@ -2,6 +2,12 @@
 Changelog for package motion_capture_tracking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.0.5 (2024-03-12)
+------------------
+* Install libNatNet.so only on x64 Linux
+  * Should fix ROS 2 build farm errors.
+* Contributors: Wolfgang Hoenig
+
 1.0.4 (2024-03-06)
 ------------------
 * install libNatNet.so as part of package

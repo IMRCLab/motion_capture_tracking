@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>motion_capture_tracking</name>
-  <version>1.0.4</version>
+  <version>1.0.5</version>
   <description>ROS Package for different motion capture systems, including custom rigid body tracking support</description>
   <maintainer email="hoenig@tu-berlin.de">Wolfgang Hönig</maintainer>
   <license>MIT</license>
