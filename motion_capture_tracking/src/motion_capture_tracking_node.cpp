@@ -288,7 +288,7 @@ int main(int argc, char **argv)
 
     if (transforms.size() > 0) {
       // publish poses
-      msgPointCloud.header.stamp = time;
+      msgPoses.header.stamp = time;
       msgPoses.poses.resize(transforms.size());
       for (size_t i = 0; i < transforms.size(); ++i) {
         msgPoses.poses[i].name = transforms[i].child_frame_id;
