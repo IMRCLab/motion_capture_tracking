@@ -33,6 +33,7 @@ jobs:
         ros_distribution:
           - humble
           - iron
+          - jazzy
 
         # Define the Docker image(s) associated with each ROS distribution.
         include:
@@ -44,6 +45,11 @@ jobs:
           # Iron Irwini (May 2023 - Nov 2024)
           - docker_image: ubuntu:jammy
             ros_distribution: iron
+            ros_version: 2
+
+          # Jazzy Jalisco (May 2024 - May 2029)
+          - docker_image: ubuntu:noble
+            ros_distribution: jazzy
             ros_version: 2
 
     container:
