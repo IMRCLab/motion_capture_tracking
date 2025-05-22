@@ -56,11 +56,11 @@ target_link_libraries(motion_capture_tracking_node
   librigidbodytracker
   libmotioncapture
 )
-ament_target_dependencies(motion_capture_tracking_node
-  rclcpp
-  tf2_ros
-  sensor_msgs
-  motion_capture_tracking_interfaces
+target_link_libraries(motion_capture_tracking_node
+  rclcpp::rclcpp
+  tf2_ros::tf2_ros
+  ${sensor_msgs_TARGETS}
+  ${motion_capture_tracking_interfaces_TARGETS}
 )
 target_include_directories(motion_capture_tracking_node PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -72,7 +72,7 @@ install(TARGETS motion_capture_tracking_node
 
 # The precompiled libNatNet library is only available for x64 Linux
 if ((CMAKE_SYSTEM_NAME STREQUAL "Linux") AND (CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64"))
-  install(FILES 
+  install(FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/deps/libmotioncapture/deps/NatNetSDKCrossplatform/lib/ubuntu/libNatNet.so
     DESTINATION lib/${PROJECT_NAME}
   )
