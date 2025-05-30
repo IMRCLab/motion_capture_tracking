@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <fmt/core.h>
 
 // ROS
 #include <rclcpp/rclcpp.hpp>
@@ -55,14 +56,19 @@ int main(int argc, char **argv)
   auto node = rclcpp::Node::make_shared("motion_capture_tracking_node");
   node->declare_parameter<std::string>("type", "vicon");
   node->declare_parameter<std::string>("hostname", "localhost");
+  node->declare_parameter<std::string>("topics.frame_id", "world");
   node->declare_parameter<std::string>("topics.poses.qos.mode", "none");
   node->declare_parameter<double>("topics.poses.qos.deadline", 100.0);
+  node->declare_parameter<std::string>("topics.tf.child_frame_id", "{}");
+
   node->declare_parameter<std::string>("logfilepath", "");
 
   std::string motionCaptureType = node->get_parameter("type").as_string();
   std::string motionCaptureHostname = node->get_parameter("hostname").as_string();
+  std::string frame_id = node->get_parameter("topics.frame_id").as_string();
   std::string poses_qos = node->get_parameter("topics.poses.qos.mode").as_string();
   double poses_deadline = node->get_parameter("topics.poses.qos.deadline").as_double();
+  std::string tf_child_frame_id = node->get_parameter("topics.tf.child_frame_id").as_string();
   std::string logFilePath = node->get_parameter("logfilepath").as_string();
 
   auto node_parameters_iface = node->get_node_parameters_interface();
@@ -93,7 +99,7 @@ int main(int argc, char **argv)
   auto pubPointCloud = node->create_publisher<sensor_msgs::msg::PointCloud2>("pointCloud", 1);
 
   sensor_msgs::msg::PointCloud2 msgPointCloud;
-  msgPointCloud.header.frame_id = "world";
+  msgPointCloud.header.frame_id = frame_id;
   msgPointCloud.height = 1;
 
   sensor_msgs::msg::PointField field;
@@ -126,7 +132,7 @@ int main(int argc, char **argv)
   }
 
   motion_capture_tracking_interfaces::msg::NamedPoseArray msgPoses;
-  msgPoses.header.frame_id = "world";
+  msgPoses.header.frame_id = frame_id;
 
   // prepare rigid body tracker
 
@@ -241,7 +247,7 @@ int main(int argc, char **argv)
       // transforms.emplace_back(eigenToTransform(transform));
       transforms.resize(transforms.size() + 1);
       transforms.back().header.stamp = time;
-      transforms.back().header.frame_id = "world";
+      transforms.back().header.frame_id = frame_id;
       transforms.back().child_frame_id = rigidBody.name();
       transforms.back().transform.translation.x = rigidBody.position().x();
       transforms.back().transform.translation.y = rigidBody.position().y();
@@ -262,7 +268,7 @@ int main(int argc, char **argv)
 
         transforms.resize(transforms.size() + 1);
         transforms.back().header.stamp = time;
-        transforms.back().header.frame_id = "world";
+        transforms.back().header.frame_id = frame_id;
         transforms.back().child_frame_id = rigidBody.name();
         transforms.back().transform.translation.x = translation.x();
         transforms.back().transform.translation.y = translation.y();
@@ -299,7 +305,9 @@ int main(int argc, char **argv)
       }
       pubPoses->publish(msgPoses);
 
-      // send TF. Since RViz and others can't handle nan's, report a fake oriention if needed
+      // send TF
+      
+      // Since RViz and others can't handle nan's, report a fake orientation if needed
       for (auto& tf : transforms) {
         if (std::isnan(tf.transform.rotation.x)) {
           tf.transform.rotation.x = 0;
@@ -307,6 +315,12 @@ int main(int argc, char **argv)
           tf.transform.rotation.z = 0;
           tf.transform.rotation.w = 1;
         }
+      }
+
+      // allow custom child_frame_ids before sending
+      for (auto& tf : transforms) {
+        std::string name = tf.child_frame_id;
+        tf.child_frame_id = fmt::format(tf_child_frame_id, name);
       }
 
       tfbroadcaster.sendTransform(transforms);

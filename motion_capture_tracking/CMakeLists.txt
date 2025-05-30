@@ -18,6 +18,14 @@ find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(PCL REQUIRED COMPONENTS common)
 
+include(FetchContent)
+
+FetchContent_Declare(
+  fmt
+  GIT_REPOSITORY https://github.com/fmtlib/fmt
+  GIT_TAG        e69e5f977d458f2650bb346dadf2ad30c5320281) # 10.2.1
+FetchContent_MakeAvailable(fmt)
+
 # add dependencies
 add_subdirectory(deps/librigidbodytracker EXCLUDE_FROM_ALL)
 set(LIBMOTIONCAPTURE_BUILD_PYTHON_BINDINGS OFF)
@@ -55,6 +63,7 @@ add_executable(motion_capture_tracking_node
 target_link_libraries(motion_capture_tracking_node
   librigidbodytracker
   libmotioncapture
+  fmt::fmt
 )
 ament_target_dependencies(motion_capture_tracking_node
   rclcpp
