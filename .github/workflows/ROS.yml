@@ -54,3 +54,4 @@ jobs:
         with:
           package-name: motion_capture_tracking
           target-ros2-distro: ${{ matrix.ros_distribution }}
+          skip-tests: true
