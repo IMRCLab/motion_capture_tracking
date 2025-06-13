@@ -2,6 +2,16 @@
 Changelog for package motion_capture_tracking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* disable optitrack_closed_source by default 
+* update librigidbodytracker (hybrid tracking)
+* update libmotioncapture to 1.0a4
+* add support for custom frame_id's
+* Replace ament_target_dependencies with target_link_libraries
+* Fix poses message not having a timestamp
+* Contributors: Alejandro Hernandez Cordero, John TGZ, Wolfgang Hönig
+
 1.0.5 (2024-03-12)
 ------------------
 * Install libNatNet.so only on x64 Linux
