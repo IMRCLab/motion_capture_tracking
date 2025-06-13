@@ -2,8 +2,8 @@
 Changelog for package motion_capture_tracking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.0.6 (2025-06-13)
+------------------
 * disable optitrack_closed_source by default 
 * update librigidbodytracker (hybrid tracking)
 * update libmotioncapture to 1.0a4
