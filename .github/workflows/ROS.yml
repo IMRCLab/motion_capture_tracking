@@ -33,6 +33,7 @@ jobs:
         ros_distribution:
           - humble
           - jazzy
+          - rolling
 
         # Define the Docker image(s) associated with each ROS distribution.
         include:
