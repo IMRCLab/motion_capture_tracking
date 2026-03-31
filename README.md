@@ -91,6 +91,12 @@ re-enabling the incompatible precompiled `libNatNet.so`.
 The `optitrack` backend also accepts `interface_ip` (default `0.0.0.0`) to select the local
 network interface for NatNet traffic. If not set, the node listens on all interfaces.
 
+For NatNet 4.1+ streams with multiple assets enabled, `motion_capture_tracking` now parses
+asset model descriptions and maps asset rigid-body IDs to names. This prevents empty names on
+`/poses` when multiple rigid bodies/assets are active (for example camera assets). If Motive
+streams a rigid body ID without a matching model description, the backend now publishes a stable
+fallback name (`rigid_body_<id>`) instead of an empty string.
+
 If you previously configured a build with the closed-source backend, clear the package build
 artifacts before rebuilding:
 
