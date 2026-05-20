@@ -1,4 +1,5 @@
 #include <iostream>
+#include <future>
 #include <vector>
 #include <fmt/core.h>
 
@@ -93,7 +94,27 @@ int main(int argc, char **argv)
     }
   }
 
-  libmotioncapture::MotionCapture *mocap = libmotioncapture::MotionCapture::connect(motionCaptureType, cfg);
+  // Connect to the motion capture system in a separate thread so that SIGINT
+  // received while the blocking NatNet handshake is in progress is handled
+  // cleanly by the rclcpp signal handler (rclcpp::ok() → false → we exit).
+  libmotioncapture::MotionCapture *mocap = nullptr;
+  {
+    auto connect_future = std::async(std::launch::async, [&]() {
+      return libmotioncapture::MotionCapture::connect(motionCaptureType, cfg);
+    });
+    while (rclcpp::ok()) {
+      rclcpp::spin_some(node);
+      if (connect_future.wait_for(std::chrono::milliseconds(50)) ==
+          std::future_status::ready) {
+        mocap = connect_future.get();
+        break;
+      }
+    }
+    if (!mocap) {
+      RCLCPP_INFO(node->get_logger(), "Shutdown requested while connecting — exiting.");
+      return 0;
+    }
+  }
 
   // prepare point cloud publisher
   auto pubPointCloud = node->create_publisher<sensor_msgs::msg::PointCloud2>("pointCloud", 1);
@@ -206,8 +227,16 @@ int main(int argc, char **argv)
 
   for (size_t frameId = 0; rclcpp::ok(); ++frameId) {
 
-    // Get a frame
-    mocap->waitForNextFrame();
+    // Get a frame — boost::asio throws system_error when SIGINT interrupts the
+    // blocking UDP recv inside waitForNextFrame().  Catch and exit cleanly.
+    try {
+      mocap->waitForNextFrame();
+    } catch (const std::exception& e) {
+      if (!rclcpp::ok()) {
+        break;
+      }
+      throw;
+    }
     auto chrono_now = std::chrono::high_resolution_clock::now();
     auto time = node->now();
 
