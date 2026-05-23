@@ -1,5 +1,7 @@
+#include <atomic>
 #include <iostream>
-#include <future>
+#include <memory>
+#include <thread>
 #include <vector>
 #include <fmt/core.h>
 
@@ -94,27 +96,43 @@ int main(int argc, char **argv)
     }
   }
 
-  // Connect to the motion capture system in a separate thread so that SIGINT
-  // received while the blocking NatNet handshake is in progress is handled
-  // cleanly by the rclcpp signal handler (rclcpp::ok() → false → we exit).
-  libmotioncapture::MotionCapture *mocap = nullptr;
-  {
-    auto connect_future = std::async(std::launch::async, [&]() {
-      return libmotioncapture::MotionCapture::connect(motionCaptureType, cfg);
-    });
-    while (rclcpp::ok()) {
-      rclcpp::spin_some(node);
-      if (connect_future.wait_for(std::chrono::milliseconds(50)) ==
-          std::future_status::ready) {
-        mocap = connect_future.get();
-        break;
-      }
-    }
-    if (!mocap) {
-      RCLCPP_INFO(node->get_logger(), "Shutdown requested while connecting — exiting.");
-      return 0;
-    }
+  // Connect to the motion capture system on a separate thread so that SIGINT
+  // received while the blocking NatNet handshake is in progress kills the
+  // process promptly. Previously this used std::async, whose returned future's
+  // destructor blocks until the async task completes — turning Ctrl+C into a
+  // 400-second wait while the libmotioncapture handshake exhausted its retry
+  // budget. Using std::thread + detach() means we abandon the worker on
+  // shutdown; the process exits and the OS reaps the thread.
+  //
+  // The result handoff goes through a shared_ptr<atomic<...>> so a late
+  // completion from the abandoned worker has no stack reference to a
+  // destructor-unwound local.
+  auto mocap_atomic =
+      std::make_shared<std::atomic<libmotioncapture::MotionCapture *>>(nullptr);
+  auto connect_done = std::make_shared<std::atomic<bool>>(false);
+  std::thread connect_thread(
+      [mocap_atomic, connect_done, motionCaptureType, cfg]() {
+        auto *m = libmotioncapture::MotionCapture::connect(motionCaptureType, cfg);
+        mocap_atomic->store(m);
+        connect_done->store(true);
+      });
+
+  while (rclcpp::ok() && !connect_done->load()) {
+    rclcpp::spin_some(node);
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
   }
+
+  libmotioncapture::MotionCapture *mocap = mocap_atomic->load();
+  if (!mocap) {
+    RCLCPP_INFO(node->get_logger(),
+                "Shutdown requested while connecting — exiting.");
+    // Detach so the future's-destructor block of the old std::async approach
+    // doesn't happen. The worker is stuck in the NatNet handshake; the OS
+    // will tear it down when the process exits.
+    connect_thread.detach();
+    return 0;
+  }
+  connect_thread.join();
 
   // prepare point cloud publisher
   auto pubPointCloud = node->create_publisher<sensor_msgs::msg::PointCloud2>("pointCloud", 1);
