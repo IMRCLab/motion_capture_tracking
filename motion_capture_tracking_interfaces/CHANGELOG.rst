@@ -2,6 +2,9 @@
 Changelog for package motion_capture_tracking_interfaces
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 1.0.6 (2025-06-13)
 ------------------
 
