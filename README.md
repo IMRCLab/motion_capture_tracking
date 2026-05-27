@@ -81,6 +81,31 @@ There are two possible backends.
 * "optitrack" uses the Direct Depacketizers option. This works on all platforms, but often has compatibility issues with untested Motive versions and doesn't support all features.
 * "optitrack_closed_source" uses the official SDK (version 4.1.0) (only available on x64 Linux; distributed as a binary library)
 
+Note for Ubuntu 22.04 / ROS 2 Humble users: recent NatNet binary updates can require newer
+`glibc`/`libstdc++` versions than what ships with Ubuntu 22.04 (for example unresolved
+`GLIBC_2.38` / `GLIBCXX_3.4.31` at link time). In this case, keep using the open-source
+`optitrack` backend. This repository's CMake defaults now force
+`LIBMOTIONCAPTURE_ENABLE_OPTITRACK_CLOSED_SOURCE=OFF` to avoid stale cache settings from
+re-enabling the incompatible precompiled `libNatNet.so`.
+
+The `optitrack` backend also accepts `interface_ip` (default `0.0.0.0`) to select the local
+network interface for NatNet traffic. If not set, the node listens on all interfaces.
+
+For NatNet 4.1+ streams with multiple assets enabled, `motion_capture_tracking` now parses
+asset model descriptions and maps asset rigid-body IDs to names. This prevents empty names on
+`/poses` when multiple rigid bodies/assets are active (for example camera assets). If Motive
+streams a rigid body ID without a matching model description, the backend now publishes a stable
+fallback name (`rigid_body_<id>`) instead of an empty string.
+
+If you previously configured a build with the closed-source backend, clear the package build
+artifacts before rebuilding:
+
+```
+cd ros2_ws
+rm -rf build/motion_capture_tracking install/motion_capture_tracking log/latest_build
+colcon build --symlink-install --packages-select motion_capture_tracking
+```
+
 Make sure that you have the following settings in Motive:
 
 menu Edit/Settings/Streaming:

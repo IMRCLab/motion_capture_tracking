@@ -26,7 +26,9 @@ set(LIBMOTIONCAPTURE_BUILD_EXAMPLE OFF)
 
 set(LIBMOTIONCAPTURE_ENABLE_QUALISYS ON)
 set(LIBMOTIONCAPTURE_ENABLE_OPTITRACK ON)
-set(LIBMOTIONCAPTURE_ENABLE_OPTITRACK_CLOSED_SOURCE OFF)
+# Force the cache value so stale build directories do not re-enable
+# linking against a precompiled libNatNet.so with incompatible GLIBC/GLIBCXX.
+set(LIBMOTIONCAPTURE_ENABLE_OPTITRACK_CLOSED_SOURCE OFF CACHE BOOL "Enable Optitrack (Closed Source)" FORCE)
 set(LIBMOTIONCAPTURE_ENABLE_VICON ON)
 set(LIBMOTIONCAPTURE_ENABLE_VRPN ON)
 set(LIBMOTIONCAPTURE_ENABLE_FZMOTION ON)
@@ -72,8 +74,10 @@ target_compile_features(motion_capture_tracking_node PUBLIC c_std_99 cxx_std_17)
 install(TARGETS motion_capture_tracking_node
   DESTINATION lib/${PROJECT_NAME})
 
-# The precompiled libNatNet library is only available for x64 Linux
-if ((CMAKE_SYSTEM_NAME STREQUAL "Linux") AND (CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64"))
+# The precompiled libNatNet library is only needed for the closed-source backend.
+if (LIBMOTIONCAPTURE_ENABLE_OPTITRACK_CLOSED_SOURCE AND
+    (CMAKE_SYSTEM_NAME STREQUAL "Linux") AND
+    (CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64"))
   install(FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/deps/libmotioncapture/deps/NatNetSDKCrossplatform/lib/ubuntu/libNatNet.so
     DESTINATION lib/${PROJECT_NAME}

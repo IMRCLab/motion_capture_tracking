@@ -1,4 +1,7 @@
+#include <atomic>
 #include <iostream>
+#include <memory>
+#include <thread>
 #include <vector>
 #include <fmt/core.h>
 
@@ -93,7 +96,43 @@ int main(int argc, char **argv)
     }
   }
 
-  libmotioncapture::MotionCapture *mocap = libmotioncapture::MotionCapture::connect(motionCaptureType, cfg);
+  // Connect to the motion capture system on a separate thread so that SIGINT
+  // received while the blocking NatNet handshake is in progress kills the
+  // process promptly. Previously this used std::async, whose returned future's
+  // destructor blocks until the async task completes — turning Ctrl+C into a
+  // 400-second wait while the libmotioncapture handshake exhausted its retry
+  // budget. Using std::thread + detach() means we abandon the worker on
+  // shutdown; the process exits and the OS reaps the thread.
+  //
+  // The result handoff goes through a shared_ptr<atomic<...>> so a late
+  // completion from the abandoned worker has no stack reference to a
+  // destructor-unwound local.
+  auto mocap_atomic =
+      std::make_shared<std::atomic<libmotioncapture::MotionCapture *>>(nullptr);
+  auto connect_done = std::make_shared<std::atomic<bool>>(false);
+  std::thread connect_thread(
+      [mocap_atomic, connect_done, motionCaptureType, cfg]() {
+        auto *m = libmotioncapture::MotionCapture::connect(motionCaptureType, cfg);
+        mocap_atomic->store(m);
+        connect_done->store(true);
+      });
+
+  while (rclcpp::ok() && !connect_done->load()) {
+    rclcpp::spin_some(node);
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+  }
+
+  libmotioncapture::MotionCapture *mocap = mocap_atomic->load();
+  if (!mocap) {
+    RCLCPP_INFO(node->get_logger(),
+                "Shutdown requested while connecting — exiting.");
+    // Detach so the future's-destructor block of the old std::async approach
+    // doesn't happen. The worker is stuck in the NatNet handshake; the OS
+    // will tear it down when the process exits.
+    connect_thread.detach();
+    return 0;
+  }
+  connect_thread.join();
 
   // prepare point cloud publisher
   auto pubPointCloud = node->create_publisher<sensor_msgs::msg::PointCloud2>("pointCloud", 1);
@@ -206,8 +245,16 @@ int main(int argc, char **argv)
 
   for (size_t frameId = 0; rclcpp::ok(); ++frameId) {
 
-    // Get a frame
-    mocap->waitForNextFrame();
+    // Get a frame — boost::asio throws system_error when SIGINT interrupts the
+    // blocking UDP recv inside waitForNextFrame().  Catch and exit cleanly.
+    try {
+      mocap->waitForNextFrame();
+    } catch (const std::exception& e) {
+      if (!rclcpp::ok()) {
+        break;
+      }
+      throw;
+    }
     auto chrono_now = std::chrono::high_resolution_clock::now();
     auto time = node->now();
 
