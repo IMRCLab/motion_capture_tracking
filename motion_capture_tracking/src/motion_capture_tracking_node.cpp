@@ -320,7 +320,7 @@ int main(int argc, char **argv)
       // allow custom child_frame_ids before sending
       for (auto& tf : transforms) {
         std::string name = tf.child_frame_id;
-        tf.child_frame_id = fmt::format(tf_child_frame_id, name);
+        tf.child_frame_id = fmt::format(fmt::runtime(tf_child_frame_id), name);
       }
 
       tfbroadcaster.sendTransform(transforms);
