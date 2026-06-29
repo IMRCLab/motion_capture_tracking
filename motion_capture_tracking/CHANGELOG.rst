@@ -2,8 +2,8 @@
 Changelog for package motion_capture_tracking
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.0.9 (2026-06-29)
+------------------
 * Optitrack: remove debug prints
 * Contributors: Wolfgang Hoenig
 
