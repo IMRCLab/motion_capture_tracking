@@ -7,6 +7,7 @@
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <tf2_ros/transform_broadcaster.h>
 #include <motion_capture_tracking_interfaces/msg/named_pose_array.hpp>
+#include <motion_capture_tracking_interfaces/msg/named_pose_array_v2.hpp>
 
 // Motion Capture
 #include <libmotioncapture/motioncapture.h>
@@ -57,6 +58,8 @@ int main(int argc, char **argv)
   node->declare_parameter<std::string>("type", "vicon");
   node->declare_parameter<std::string>("hostname", "localhost");
   node->declare_parameter<std::string>("topics.frame_id", "world");
+  node->declare_parameter<std::string>("topics.header_time", "ros");
+  node->declare_parameter<uint8_t>("topics.poses.version", 1);
   node->declare_parameter<std::string>("topics.poses.qos.mode", "none");
   node->declare_parameter<double>("topics.poses.qos.deadline", 100.0);
   node->declare_parameter<std::string>("topics.tf.child_frame_id", "{}");
@@ -66,6 +69,8 @@ int main(int argc, char **argv)
   std::string motionCaptureType = node->get_parameter("type").as_string();
   std::string motionCaptureHostname = node->get_parameter("hostname").as_string();
   std::string frame_id = node->get_parameter("topics.frame_id").as_string();
+  std::string header_time = node->get_parameter("topics.header_time").as_string();
+  uint8_t poses_version = node->get_parameter("topics.poses.version").as_int();
   std::string poses_qos = node->get_parameter("topics.poses.qos.mode").as_string();
   double poses_deadline = node->get_parameter("topics.poses.qos.deadline").as_double();
   std::string tf_child_frame_id = node->get_parameter("topics.tf.child_frame_id").as_string();
@@ -120,19 +125,32 @@ int main(int argc, char **argv)
 
   // prepare pose array publisher
   rclcpp::Publisher<motion_capture_tracking_interfaces::msg::NamedPoseArray>::SharedPtr pubPoses;
+  rclcpp::Publisher<motion_capture_tracking_interfaces::msg::NamedPoseArrayV2>::SharedPtr pubPosesV2;
+
   if (poses_qos == "none") {
-    pubPoses = node->create_publisher<motion_capture_tracking_interfaces::msg::NamedPoseArray>("poses", 1);
+    if (poses_version == 1) {
+      pubPoses = node->create_publisher<motion_capture_tracking_interfaces::msg::NamedPoseArray>("poses", 1);
+    } else if (poses_version == 2) {
+      pubPosesV2 = node->create_publisher<motion_capture_tracking_interfaces::msg::NamedPoseArrayV2>("poses", 1);
+    }
   } else if (poses_qos == "sensor") {
     rclcpp::SensorDataQoS sensor_data_qos;
     sensor_data_qos.keep_last(1);
     sensor_data_qos.deadline(rclcpp::Duration(0/*s*/, (int)1e9/poses_deadline /*ns*/));
-    pubPoses = node->create_publisher<motion_capture_tracking_interfaces::msg::NamedPoseArray>("poses", sensor_data_qos);
+    if (poses_version == 1) {
+      pubPoses = node->create_publisher<motion_capture_tracking_interfaces::msg::NamedPoseArray>("poses", sensor_data_qos);
+    } else if (poses_version == 2) {
+      pubPosesV2 = node->create_publisher<motion_capture_tracking_interfaces::msg::NamedPoseArrayV2>("poses", sensor_data_qos);
+    }
   } else {
     throw std::runtime_error("Unknown QoS mode! " + poses_qos);
   }
 
   motion_capture_tracking_interfaces::msg::NamedPoseArray msgPoses;
   msgPoses.header.frame_id = frame_id;
+
+  motion_capture_tracking_interfaces::msg::NamedPoseArrayV2 msgPosesV2;
+  msgPosesV2.header.frame_id = frame_id;
 
   // prepare rigid body tracker
 
@@ -209,7 +227,12 @@ int main(int argc, char **argv)
     // Get a frame
     mocap->waitForNextFrame();
     auto chrono_now = std::chrono::high_resolution_clock::now();
-    auto time = node->now();
+    rclcpp::Time time;
+    if (header_time == "ros") {
+      time = node->now();
+    } else if (header_time == "camera") {
+      time = rclcpp::Time(mocap->timeStamp() * 1000);
+    }
 
     auto pointcloud = mocap->pointCloud();
 
@@ -294,16 +317,36 @@ int main(int argc, char **argv)
 
     if (transforms.size() > 0) {
       // publish poses
-      msgPoses.header.stamp = time;
-      msgPoses.poses.resize(transforms.size());
-      for (size_t i = 0; i < transforms.size(); ++i) {
-        msgPoses.poses[i].name = transforms[i].child_frame_id;
-        msgPoses.poses[i].pose.position.x = transforms[i].transform.translation.x;
-        msgPoses.poses[i].pose.position.y = transforms[i].transform.translation.y;
-        msgPoses.poses[i].pose.position.z = transforms[i].transform.translation.z;
-        msgPoses.poses[i].pose.orientation = transforms[i].transform.rotation;
+      if (poses_version == 1) {
+        msgPoses.header.stamp = time;
+        msgPoses.poses.resize(transforms.size());
+        for (size_t i = 0; i < transforms.size(); ++i) {
+          msgPoses.poses[i].name = transforms[i].child_frame_id;
+          msgPoses.poses[i].pose.position.x = transforms[i].transform.translation.x;
+          msgPoses.poses[i].pose.position.y = transforms[i].transform.translation.y;
+          msgPoses.poses[i].pose.position.z = transforms[i].transform.translation.z;
+          msgPoses.poses[i].pose.orientation = transforms[i].transform.rotation;
+        }
+        pubPoses->publish(msgPoses);
+      } else if (poses_version == 2) {
+        msgPosesV2.header.stamp = time;
+        msgPosesV2.timestamp = mocap->timeStamp();
+        const auto& latencies = mocap->latency();
+        msgPosesV2.latencies.resize(latencies.size());
+        for (size_t i = 0; i < latencies.size(); ++i) {
+          msgPosesV2.latencies[i].source = latencies[i].name();
+          msgPosesV2.latencies[i].latency = latencies[i].value();
+        }
+        msgPosesV2.poses.resize(transforms.size());
+        for (size_t i = 0; i < transforms.size(); ++i) {
+          msgPosesV2.poses[i].name = transforms[i].child_frame_id;
+          msgPosesV2.poses[i].pose.position.x = transforms[i].transform.translation.x;
+          msgPosesV2.poses[i].pose.position.y = transforms[i].transform.translation.y;
+          msgPosesV2.poses[i].pose.position.z = transforms[i].transform.translation.z;
+          msgPosesV2.poses[i].pose.orientation = transforms[i].transform.rotation;
+        }
+        pubPosesV2->publish(msgPosesV2);
       }
-      pubPoses->publish(msgPoses);
 
       // send TF
       
