@@ -9,7 +9,9 @@
     # Specify additional settings for the /poses topic here
     topics:
       frame_id: "mocap"
+      header_time: "ros" # one of "ros" (current ROS time when message arrives) or "camera" (timestamp from the camera)
       poses:
+        version: 2
         qos:
           mode: "none" # one of "none" or "sensor"
           deadline: 100.0 # Hz
