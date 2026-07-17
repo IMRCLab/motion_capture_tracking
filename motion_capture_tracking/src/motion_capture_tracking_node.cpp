@@ -335,7 +335,7 @@ int main(int argc, char **argv)
         msgPosesV2.latencies.resize(latencies.size());
         for (size_t i = 0; i < latencies.size(); ++i) {
           msgPosesV2.latencies[i].source = latencies[i].name();
-          msgPosesV2.latencies[i].latency = latencies[i].value();
+          msgPosesV2.latencies[i].latency = latencies[i].value() * 1e6;
         }
         msgPosesV2.poses.resize(transforms.size());
         for (size_t i = 0; i < transforms.size(); ++i) {
