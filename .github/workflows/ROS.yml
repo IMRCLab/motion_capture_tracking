@@ -61,6 +61,10 @@ jobs:
     container:
       image: ${{ matrix.docker_image }}
     steps:
+      - name: install dependencies
+        run: |
+          sudo apt update
+          sudo apt-get dist-upgrade -y
       - name: build and test ROS 2
         uses: ros-tooling/action-ros-ci@v0.4
         with:
