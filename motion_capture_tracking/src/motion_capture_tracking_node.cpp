@@ -4,8 +4,11 @@
 
 // ROS
 #include <rclcpp/rclcpp.hpp>
+#include "rclcpp/node_interfaces/node_interfaces.hpp"
+#include "rclcpp/node_interfaces/get_node_parameters_interface.hpp"
+#include "rclcpp/node_interfaces/get_node_topics_interface.hpp"
+#include "tf2_ros/transform_broadcaster.h"
 #include <sensor_msgs/msg/point_cloud2.hpp>
-#include <tf2_ros/transform_broadcaster.h>
 #include <motion_capture_tracking_interfaces/msg/named_pose_array.hpp>
 #include <motion_capture_tracking_interfaces/msg/named_pose_array_v2.hpp>
 
@@ -217,7 +220,12 @@ int main(int argc, char **argv)
   tracker.setLogWarningCallback(std::bind(logWarn, node->get_logger(), std::placeholders::_1));
 
   // prepare TF broadcaster
-  tf2_ros::TransformBroadcaster tfbroadcaster(node);
+  tf2_ros::TransformBroadcaster tfbroadcaster(
+        rclcpp::node_interfaces::NodeInterfaces<
+          rclcpp::node_interfaces::NodeParametersInterface,
+          rclcpp::node_interfaces::NodeTopicsInterface>(
+            node->get_node_parameters_interface(),
+            node->get_node_topics_interface()));
   std::vector<geometry_msgs::msg::TransformStamped> transforms;
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr markers(new pcl::PointCloud<pcl::PointXYZ>);
