@@ -95,6 +95,16 @@ if(BUILD_TESTING)
   # uncomment the line when this package is not in a git repo
   #set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
+
+  # ament_lint_auto_file_exclude not supported for ament_cmake_lint
+  # Instead, we manually only run it on this file
+  set(AMENT_LINT_AUTO_EXCLUDE
+    ament_cmake_lint_cmake
+  )
+  ament_lint_auto_find_active()
+
+  find_package(ament_cmake_lint_cmake REQUIRED)
+  ament_lint_cmake("${CMAKE_CURRENT_LIST_FILE}")
 endif()
 
 # Install launch files.
