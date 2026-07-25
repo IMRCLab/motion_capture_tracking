@@ -80,16 +80,30 @@ if ((CMAKE_SYSTEM_NAME STREQUAL "Linux") AND (CMAKE_SYSTEM_PROCESSOR STREQUAL "x
   )
 endif()
 
-# if(BUILD_TESTING)
-#   find_package(ament_lint_auto REQUIRED)
-#   # the following line skips the linter which checks for copyrights
-#   # uncomment the line when a copyright and license is not present in all source files
-#   #set(ament_cmake_copyright_FOUND TRUE)
-#   # the following line skips cpplint (only works in a git repo)
-#   # uncomment the line when this package is not in a git repo
-#   #set(ament_cmake_cpplint_FOUND TRUE)
-#   ament_lint_auto_find_test_dependencies()
-# endif()
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+
+  # Exclude your deps directory from all linters
+  set(AMENT_LINT_AUTO_FILE_EXCLUDE
+    "${CMAKE_CURRENT_SOURCE_DIR}/deps/*"
+  )
+  # ament_lint_auto_file_exclude not supported for ament_cmake_lint
+  # Instead, we manually only run it on this file
+  set(AMENT_LINT_AUTO_EXCLUDE
+    ament_cmake_lint_cmake
+  )
+
+  # the following line skips the linter which checks for copyrights
+  # uncomment the line when a copyright and license is not present in all source files
+  set(ament_cmake_copyright_FOUND TRUE)
+  # the following line skips cpplint (only works in a git repo)
+  # uncomment the line when this package is not in a git repo
+  #set(ament_cmake_cpplint_FOUND TRUE)
+  ament_lint_auto_find_test_dependencies()
+
+  find_package(ament_cmake_lint_cmake REQUIRED)
+  ament_lint_cmake("${CMAKE_CURRENT_LIST_FILE}")
+endif()
 
 # Install launch files.
 install(DIRECTORY
