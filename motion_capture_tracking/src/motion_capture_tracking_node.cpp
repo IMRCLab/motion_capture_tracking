@@ -59,6 +59,11 @@ int main(int argc, char **argv)
   auto node = rclcpp::Node::make_shared("motion_capture_tracking_node");
   node->declare_parameter<std::string>("type", "vicon");
   node->declare_parameter<std::string>("hostname", "localhost");
+  // Local address to bind the data socket and pin the multicast group join to.
+  // Required on multi-homed hosts in multicast mode: an unpinned (0.0.0.0) join
+  // sends the IGMP membership out the default-route interface, which may not be
+  // the one facing the mocap network, and the stream then never arrives.
+  node->declare_parameter<std::string>("interface_ip", "0.0.0.0");
   node->declare_parameter<std::string>("topics.frame_id", "world");
   node->declare_parameter<std::string>("topics.poses.qos.mode", "none");
   node->declare_parameter<double>("topics.poses.qos.deadline", 100.0);
@@ -85,6 +90,7 @@ int main(int argc, char **argv)
   // Make a new client
   std::map<std::string, std::string> cfg;
   cfg["hostname"] = motionCaptureHostname;
+  cfg["interface_ip"] = node->get_parameter("interface_ip").as_string();
 
   // if the mock type is selected, add the defined rigid bodies
   if (motionCaptureType == "mock") {
